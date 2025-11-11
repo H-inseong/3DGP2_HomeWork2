@@ -1,0 +1,87 @@
+## 게임 UI 및 상태 관리 개발 계획서
+
+### 1. 개요
+
+본 문서는 3D 게임 프로젝트의 UI 및 게임 상태 관리 시스템을 구축하기 위한 상세 계획을 기술합니다. 기존 `LabProject08-7`을 기반으로 게임 상태 머신, 텍스처 아틀라스 기반 폰트 렌더링, UI 버튼 시스템, 그리고 효율적인 씬 관리 아키텍처를 체계적으로 구현하는 것을 목표로 합니다.
+
+### 2. 기반 프로젝트
+
+*   `LabProject08-7`
+
+### 3. 주요 목표
+
+*   게임의 기본 흐름(시작 화면, 게임 중, 일시정지)을 제어하는 견고한 상태 머신 구현.
+*   텍스처 아틀라스 기반의 고성능 폰트 렌더링 시스템 구축.
+*   마우스 피킹을 통한 상호작용이 가능한 UI 버튼 시스템 구현.
+*   각 게임 상태에 맞는 씬 콘텐츠를 효율적으로 관리하는 아키텍처 설계.
+
+### 4. 상세 설계
+
+#### 4.1. 게임 상태 관리 (Game State Management)
+
+*   **`EGameState` 열거형 정의:** `StartScreen`, `InGame`, `PausedMenu` 상태를 정의합니다.
+*   **`CGameFramework`의 역할:**
+    *   `m_eGameState` 멤버 변수를 통해 현재 게임 상태를 저장하고 관리합니다.
+    *   `ChangeGameState(EGameState newState)` 함수를 구현하여 상태 전환 로직을 중앙에서 처리합니다.
+    *   메인 루프(`FrameAdvance`)에서 `m_eGameState`에 따라 `Update` 및 `Render` 함수를 분기 처리합니다.
+
+#### 4.2. 폰트 렌더링 시스템 (`CSpriteFont`)
+
+*   **소유권:** `CSpriteFont` 객체는 게임 전체에서 사용되는 공용 리소스이므로, **`CGameFramework`가 소유**합니다.
+*   **애셋 형식:**
+    *   폰트 텍스처는 `D2coding_0.dds` (512x512 픽셀, 64px 폰트 크기, DDS 압축 포맷)를 사용합니다.
+    *   폰트 메타데이터는 `D2coding.fnt` (텍스트 형식) 파일을 사용합니다.
+*   **`CSpriteFont` 클래스:**
+    *   `LoadFontData(const std::string& filename)`: `.fnt` 파일을 파싱하여 각 글자의 위치, 크기, 오프셋 정보를 `std::map<int, CharInfo>`에 저장합니다.
+    *   `DrawString(ID3D12GraphicsCommandList* pd3dCommandList, const std::string& text, float x, float y)`: 저장된 정보를 바탕으로 문자열을 화면에 렌더링합니다.
+*   **렌더링 세부 사항:**
+    *   2D 렌더링 전용 셰이더와 PSO를 사용합니다.
+    *   직교 투영 행렬(Orthographic Projection Matrix)을 사용하여 스크린 좌표계에 렌더링합니다.
+    *   알파 블렌딩을 활성화하고, 텍스처 샘플링 시 `D3D12_FILTER_MIN_MAG_MIP_POINT` (Point Sampler)를 사용하여 글자의 선명도를 유지합니다.
+
+#### 4.3. UI 버튼 시스템 (`CUIButton`, `CUIManager`)
+
+*   **`CUIButton` 클래스:**
+    *   버튼의 위치, 크기, 텍스처, 그리고 클릭 시 실행될 동작(`std::function<void()>`)을 정의합니다.
+    *   `IsClicked(int x, int y)` 함수로 마우스 클릭과의 충돌을 감지합니다.
+*   **`CUIManager` 클래스:**
+    *   특정 UI 화면(예: 시작 메뉴)에 속한 `CUIButton` 객체들을 관리합니다.
+    *   `OnMouseClick(int x, int y)` 함수로 마우스 클릭 이벤트를 받아 해당 버튼의 `OnClick()`을 호출합니다.
+*   **소유권:** `CUIManager` 객체는 각 UI 화면에 종속되므로, `CGameFramework`가 각 `CUIManager` 인스턴스를 소유하고 관리합니다.
+
+#### 4.4. 씬 관리 아키텍처 (Scene Management Architecture)
+
+*   **`CGameFramework`의 역할:**
+    *   `std::vector<std::unique_ptr<CScene>> m_vScenes`를 통해 여러 `CScene` 객체(예: `CStartScene`, `CInGameScene`)를 소유하고 관리합니다.
+    *   `m_nCurrentScene` 인덱스를 통해 현재 활성화된 씬을 추적합니다.
+    *   `ChangeGameState` 함수 내에서 이전 상태의 씬 콘텐츠를 정리하고, 새 상태의 씬 콘텐츠를 구축하는 로직을 포함합니다.
+    *   `CSpriteFont` 객체를 생성한 후, 각 `CScene` 객체에 `SetSpriteFont(CSpriteFont* pSpriteFont)` 함수를 통해 포인터를 전달하여 공유합니다.
+*   **`CScene`의 역할:**
+    *   자신에게 종속된 3D 게임 오브젝트(플레이어, 적, 지형 등)를 관리합니다.
+    *   `CGameFramework`로부터 전달받은 `CSpriteFont` 포인터를 사용하여 씬에 종속된 텍스트(예: 데미지 숫자)를 렌더링합니다.
+*   **`PausedMenu` 처리:**
+    *   `PausedMenu`는 별도의 `CScene`으로 만들지 않고, `CGameFramework` 내의 UI 상태로 처리합니다.
+    *   `PausedMenu` 상태에서는 `CInGameScene`의 `Update()` 호출을 중단하여 게임 월드를 멈추고, `Render()`는 계속 호출하여 멈춘 게임 화면을 배경으로 사용합니다.
+    *   그 위에 `CGameFramework`가 직접 `CSpriteFont`와 `CUIManager`를 사용하여 일시정지 메뉴 UI를 렌더링합니다.
+
+### 5. 개발 단계
+
+1.  **1단계: `CSpriteFont` 클래스 구현**
+    *   `CharInfo` 구조체 정의.
+    *   `CSpriteFont` 클래스 정의 및 `LoadFontData` 함수 구현 (텍스트 `.fnt` 파일 파싱).
+    *   `DrawString` 함수의 스켈레톤 구현.
+2.  **2단계: 2D 렌더링 셰이더 및 PSO 구현**
+    *   직교 투영 행렬을 사용하는 2D 스프라이트/폰트 렌더링용 Vertex/Pixel Shader 작성.
+    *   알파 블렌딩이 활성화되고 깊이 테스트가 비활성화된 PSO 생성.
+3.  **3단계: `CUIButton` 및 `CUIManager` 구현**
+    *   `CUIButton` 클래스 정의 (위치, 크기, 텍스처, `std::function` 콜백).
+    *   `CUIManager` 클래스 정의 (버튼 관리, 마우스 클릭 처리).
+4.  **4단계: `CGameFramework` 및 씬 관리 로직 구현**
+    *   `EGameState` 열거형 정의.
+    *   `CGameFramework`에 `m_vScenes`, `m_pSpriteFont`, `m_eGameState` 멤버 추가.
+    *   `CGameFramework::BuildObjects()`에서 `CSpriteFont` 생성 및 씬 배열 초기화, 폰트 포인터 연결.
+    *   `CGameFramework::ChangeGameState()` 함수 구현 (상태 전환, 씬 콘텐츠 빌드/파괴).
+    *   `CScene::BuildObjects()` 및 `CScene::ReleaseObjects()` 구현 (각 씬의 3D 오브젝트 관리).
+5.  **5단계: UI 통합 및 상태별 렌더링**
+    *   `CGameFramework::FrameAdvance()`에서 `m_eGameState`에 따라 `m_vScenes`의 `Update`/`Render` 호출.
+    *   각 게임 상태에 맞는 UI (텍스트, 버튼) 렌더링 로직 구현.

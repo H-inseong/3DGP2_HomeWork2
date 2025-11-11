@@ -1,0 +1,296 @@
+## 코드 변경 및 추가 계획
+
+본 문서는 '게임 UI 및 상태 관리 개발 계획서'에 따라 실제 코드에 적용해야 할 변경 및 추가 사항을 클래스별로 정리합니다.
+
+---
+
+### 1. `GameFramework.h` - 프레임워크 헤더 파일
+
+```cpp
+#pragma once
+
+#include <vector>
+#include <memory>
+#include "Timer.h"
+#include "Player.h"
+#include "Scene.h"
+#include "CSpriteFont.h" // 새로 추가
+#include "CUIManager.h"  // 새로 추가
+
+// 게임 상태를 나타내는 열거형 추가
+enum class EGameState : unsigned char
+{
+    StartScreen,
+    InGame,
+    PausedMenu
+};
+
+class CGameFramework
+{
+public:
+    // ... 기존 함수들 ...
+
+private:
+    // --- 상태 및 씬 관리 ---
+    EGameState m_eGameState = EGameState::StartScreen;
+    int m_nCurrentScene = 0;
+    std::vector<std::unique_ptr<CScene>> m_vScenes;
+
+    // --- UI 시스템 ---
+    std::unique_ptr<CSpriteFont> m_pSpriteFont;
+    std::unique_ptr<CUIManager> m_pStartMenuUI;
+    std::unique_ptr<CUIManager> m_pPauseMenuUI;
+
+    // --- 상태 전환 및 씬 빌드 함수 선언 ---
+    void ChangeGameState(EGameState newState);
+    void BuildScenes(); // 모든 씬을 생성하고 초기화하는 함수
+    void BuildUI();     // 모든 UI를 생성하고 초기화하는 함수
+
+public:
+    // ... OnCreate, OnDestroy, FrameAdvance 등 ...
+};
+```
+
+### 2. `GameFramework.cpp` - 프레임워크 구현 파일
+
+```cpp
+// OnCreate() 또는 생성자에서 호출
+void CGameFramework::BuildObjects()
+{
+    // ... 기존 D3D12 객체 생성 ...
+
+    BuildScenes(); // 씬 생성
+    BuildUI();     // UI 생성
+}
+
+void CGameFramework::BuildScenes()
+{
+    // 씬 생성 (예: 0=시작 씬, 1=인게임 씬)
+    // CStartScene, CInGameScene은 CScene을 상속받아 각자에게 필요한 오브젝트를 로드하도록 구현
+    m_vScenes.push_back(std::make_unique<CStartScene>());
+    m_vScenes.push_back(std::make_unique<CInGameScene>());
+
+    for (const auto& scene : m_vScenes)
+    {
+        scene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+    }
+}
+
+void CGameFramework::BuildUI()
+{
+    // 1. 폰트 시스템 생성
+    CTexture* pFontTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0);
+    pFontTexture->LoadTextureFromFile(m_pd3dDevice, m_pd3dCommandList, L"Font/D2coding_0.dds", 0);
+    m_pSpriteFont = std::make_unique<CSpriteFont>(pFontTexture);
+    m_pSpriteFont->LoadFontData("Font/D2coding.fnt");
+
+    // 2. 모든 씬에 폰트 시스템 포인터 연결
+    for (const auto& scene : m_vScenes)
+    {
+        scene->SetSpriteFont(m_pSpriteFont.get());
+    }
+
+    // 3. 시작 메뉴 UI 생성
+    m_pStartMenuUI = std::make_unique<CUIManager>();
+    m_pStartMenuUI->AddButton(new CUIButton(..., [this]() { ChangeGameState(EGameState::InGame); })); // START 버튼
+    m_pStartMenuUI->AddButton(new CUIButton(..., [this]() { PostQuitMessage(0); })); // QUIT 버튼
+
+    // 4. 일시정지 메뉴 UI 생성
+    m_pPauseMenuUI = std::make_unique<CUIManager>();
+    m_pPauseMenuUI->AddButton(new CUIButton(..., [this]() { m_eGameState = EGameState::InGame; })); // RESUME 버튼
+}
+
+void CGameFramework::FrameAdvance()
+{
+    // ... 타이머 업데이트 ...
+
+    // --- 상태별 업데이트 로직 ---
+    switch (m_eGameState)
+    {
+        case EGameState::InGame:
+            m_vScenes[m_nCurrentScene]->Update(m_fTimeElapsed);
+            break;
+        // StartScreen, PausedMenu에서는 월드 업데이트 없음
+    }
+
+    // --- 렌더링 ---
+    // ...
+    switch (m_eGameState)
+    {
+        case EGameState::StartScreen:
+            m_vScenes[0]->Render(m_pd3dCommandList, m_pCamera); // 시작 씬 배경 렌더링
+            m_pStartMenuUI->Render(m_pd3dCommandList); // 시작 메뉴 UI 렌더링
+            break;
+        case EGameState::InGame:
+            m_vScenes[1]->Render(m_pd3dCommandList, m_pCamera); // 인게임 씬 렌더링
+            // HUD UI 렌더링 (예: m_pSpriteFont->DrawString(...))
+            break;
+        case EGameState::PausedMenu:
+            m_vScenes[1]->Render(m_pd3dCommandList, m_pCamera); // 인게임 씬은 멈춘 채로 렌더링
+            m_pPauseMenuUI->Render(m_pd3dCommandList); // 일시정지 메뉴 UI 렌더링
+            break;
+    }
+    // ...
+}
+
+void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
+{
+    if (nMessageID == WM_LBUTTONDOWN)
+    {
+        int x = LOWORD(lParam);
+        int y = HIWORD(lParam);
+        switch (m_eGameState)
+        {
+            case EGameState::StartScreen:
+                m_pStartMenuUI->OnMouseClick(x, y);
+                break;
+            case EGameState::PausedMenu:
+                m_pPauseMenuUI->OnMouseClick(x, y);
+                break;
+        }
+    }
+    // ...
+}
+
+void CGameFramework::ChangeGameState(EGameState newState)
+{
+    if (m_eGameState == newState) return;
+
+    // 상태 전환 로직 (필요 시 이전 상태 정리)
+    // ...
+
+    m_eGameState = newState;
+
+    // 새 상태에 맞는 씬 인덱스 설정
+    if (newState == EGameState::StartScreen) m_nCurrentScene = 0;
+    if (newState == EGameState::InGame) m_nCurrentScene = 1;
+}
+```
+
+### 3. `Scene.h` - 씬 헤더 파일
+
+```cpp
+#pragma once
+
+class CSpriteFont; // 전방 선언
+
+class CScene
+{
+public:
+    CScene() { }
+    virtual ~CScene() { }
+
+    virtual void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList) { }
+    virtual void ReleaseObjects() { }
+    // ... Update, Render 등 ...
+
+    void SetSpriteFont(CSpriteFont *pSpriteFont) { m_pSpriteFont = pSpriteFont; }
+
+protected:
+    // ... m_vGameObjects 등 ...
+    CSpriteFont *m_pSpriteFont = nullptr; // 빌려온 포인터
+};
+
+// 각 씬은 CScene을 상속받아 자신만의 BuildObjects를 구현
+class CStartScene : public CScene { ... };
+class CInGameScene : public CScene { ... };
+```
+
+### 4. `CSpriteFont.h` - 폰트 클래스 (신규 생성)
+
+```cpp
+#pragma once
+
+#include <string>
+#include <map>
+#include "d3dx12.h"
+#include "Object.h"
+
+struct CharInfo { ... };
+
+class CSpriteFont
+{
+public:
+    CSpriteFont(CTexture* pTexture);
+    ~CSpriteFont();
+
+    bool LoadFontData(const std::string& filename);
+    void DrawString(ID3D12GraphicsCommandList* pd3dCommandList, const std::string& text, float x, float y);
+
+private:
+    // ... 멤버 변수들 ...
+};
+```
+
+### 5. `CUIButton.h` / `CUIManager.h` - UI 버튼 클래스 (신규 생성)
+
+```cpp
+#pragma once
+
+#include <functional>
+#include <vector>
+#include <memory>
+
+class CUIButton
+{
+public:
+    CUIButton(const XMFLOAT2& pos, const XMFLOAT2& size, CTexture* tex, std::function<void()> onClick);
+    bool IsClicked(int x, int y);
+    void OnClick() { if (m_fnOnClickAction) m_fnOnClickAction(); }
+    void Render(...);
+private:
+    // ... 멤버 변수들 ...
+    std::function<void()> m_fnOnClickAction;
+};
+
+class CUIManager
+{
+public:
+    void AddButton(CUIButton* pButton);
+    void OnMouseClick(int x, int y);
+    void Render(...);
+private:
+    std::vector<std::unique_ptr<CUIButton>> m_vButtons;
+};
+```
+
+### 6. `Sprite.hlsl` - 2D 렌더링 셰이더 (신규 생성)
+
+```hlsl
+// 2D 렌더링을 위한 셰이더
+
+cbuffer cbSprite : register(b0)
+{
+    matrix gmtxOrthographic; // 직교 투영 행렬
+};
+
+Texture2D gtxtSprite : register(t0); // 스프라이트 또는 폰트 텍스처
+SamplerState gSampler : register(s0); // Point Sampler 사용
+
+struct VS_INPUT
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD0;
+};
+
+struct PS_INPUT
+{
+    float4 position : SV_POSITION;
+    float2 uv : TEXCOORD0;
+};
+
+PS_INPUT VS_Main(VS_INPUT input)
+{
+    PS_INPUT output;
+    // 2D 좌표를 직교 투영 행렬로 변환
+    output.position = mul(float4(input.position, 1.0f), gmtxOrthographic);
+    output.uv = input.uv;
+    return output;
+}
+
+float4 PS_Main(PS_INPUT input) : SV_TARGET
+{
+    // 텍스처에서 색상 샘플링
+    return gtxtSprite.Sample(gSampler, input.uv);
+}
+```
