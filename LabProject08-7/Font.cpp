@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream> 
 
+//D2coding 폰트의 0~127 문자만 지원
 CSpriteFont::CSpriteFont(CTexture* pTexture, int MAX_FONT_CHARS = 128) : m_pTexture(pTexture)
 {
 	if (m_pTexture) m_pTexture->AddRef();
@@ -86,4 +87,5 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 
 void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::string_view text, XMFLOAT2 position, XMFLOAT4 color, float fScale)
 {
+	// 이 부분은 2D 렌더링 셰이더와 PSO가 준비된 후 구현될 예정입니다.
 }
