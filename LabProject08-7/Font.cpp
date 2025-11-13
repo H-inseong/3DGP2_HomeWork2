@@ -4,7 +4,6 @@
 #include <fstream>
 #include <sstream> 
 
-//D2coding 폰트의 0~127 문자만 지원
 CSpriteFont::CSpriteFont(CTexture* pTexture, int MAX_FONT_CHARS = 128) : m_pTexture(pTexture)
 {
 	if (m_pTexture) m_pTexture->AddRef();
@@ -37,9 +36,9 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 			{
 				std::string_view sv_token(token);
 				if (sv_token.rfind("lineHeight", 0) == 0) m_nLineHeight = std::stoi(std::string(sv_token.substr(11)));
-				if (sv_token.rfind("base", 0) == 0) m_nLineHeight = std::stoi(std::string(sv_token.substr(5)));
-				if (sv_token.rfind("sclaeW", 0) == 0) m_nLineHeight = std::stoi(std::string(sv_token.substr(7)));
-				if (sv_token.rfind("sclaeH", 0) == 0) m_nLineHeight = std::stoi(std::string(sv_token.substr(7)));
+				else if (sv_token.rfind("base", 0) == 0) m_nBase = std::stoi(std::string(sv_token.substr(5)));
+				else if (sv_token.rfind("scaleW", 0) == 0) m_nScaleW = std::stoi(std::string(sv_token.substr(7)));
+				else if (sv_token.rfind("scaleH", 0) == 0) m_nScaleH = std::stoi(std::string(sv_token.substr(7)));
 			}
 		}
 		else if (type == "char")
@@ -76,16 +75,11 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 				return false;
 			}
 		}
-		file.close();
-		return true;
 	}
-
-
-
-	return false;
+	file.close();
+	return true;
 }
 
 void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::string_view text, XMFLOAT2 position, XMFLOAT4 color, float fScale)
 {
-	// 이 부분은 2D 렌더링 셰이더와 PSO가 준비된 후 구현될 예정입니다.
 }
