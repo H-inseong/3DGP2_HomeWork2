@@ -10,6 +10,13 @@ struct CB_FRAMEWORK_INFO
 	float					m_fElapsedTime;
 };
 
+enum class EGameState : unsigned char
+{
+	Start,	// 0
+	Game,	// 1
+	Menu	// 2
+};
+
 class CGameFramework
 {
 public:
@@ -31,6 +38,7 @@ public:
 	void ChangeSwapChainState();
 
     void BuildObjects();
+	void BuildFont();
     void ReleaseObjects();
 
     void ProcessInput();
@@ -90,13 +98,21 @@ private:
 	CScene						*m_pScene = NULL;
 	CPlayer						*m_pPlayer = NULL;
 	CCamera						*m_pCamera = NULL;
+	
+
+	CSpriteFont					*m_pSpriteFont = NULL;
+	std::vector<CScene*>		m_vScenes = {};
+	int							m_nScenes = 0;
+
+	EGameState					m_eGameState = EGameState::Start;
+	int							m_nCurrentScene = 0;
 
 	POINT						m_ptOldCursorPos;
 
 	_TCHAR						m_pszCaption[70];
 
 protected:
-	ID3D12Resource* m_pd3dcbFrameworkInfo = NULL;
-	CB_FRAMEWORK_INFO* m_pcbMappedFrameworkInfo = NULL;
+	ID3D12Resource*				m_pd3dcbFrameworkInfo = NULL;
+	CB_FRAMEWORK_INFO*			m_pcbMappedFrameworkInfo = NULL;
 };
 

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Shader.h"
+#include "Font.h"
 
 class CDescriptorHeap
 {
@@ -65,11 +66,13 @@ protected:
 
 	CHeightMapTerrain			*m_pTerrain = NULL;
 	CSkyBox						*m_pSkyBox = NULL;
+	
 
 	ID3D12RootSignature			*m_pd3dGraphicsRootSignature = NULL;
 
 public:
-	static CDescriptorHeap*		m_pDescriptorHeap;
+	CSpriteFont					*m_pSpriteFont = NULL;
+	static CDescriptorHeap		*m_pDescriptorHeap;
 
 	static void CreateCbvSrvDescriptorHeaps(ID3D12Device* pd3dDevice, int nConstantBufferViews, int nShaderResourceViews);
 	static void CreateConstantBufferViews(ID3D12Device* pd3dDevice, int nConstantBufferViews, ID3D12Resource* pd3dConstantBuffers, UINT nStride);
@@ -87,4 +90,30 @@ public:
 	static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUCbvDescriptorNextHandle() { return(m_pDescriptorHeap->m_d3dCbvGPUDescriptorNextHandle); }
 	static D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSrvDescriptorStartHandle() { return(m_pDescriptorHeap->m_d3dSrvCPUDescriptorStartHandle); }
 	static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSrvDescriptorStartHandle() { return(m_pDescriptorHeap->m_d3dSrvGPUDescriptorStartHandle); }
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+class CStartScene : public CScene
+{
+public:
+	CStartScene();
+	~CStartScene();
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+class CGameScene : public CScene
+{
+public:
+	CGameScene();
+	~CGameScene();
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class CMenuScene : public CScene
+{
+public:
+	CMenuScene();
+	~CMenuScene();
 };

@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "GameFramework.h"
+#include "Font.h"
 
 CGameFramework::CGameFramework()
 {
@@ -423,10 +424,19 @@ void CGameFramework::BuildObjects()
 {
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
-	m_pScene = new CScene();
-	m_pScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+	m_nScenes = 3;
+	m_vScenes.push_back(new CStartScene());
+	m_vScenes.push_back(new CGameScene());
+	m_vScenes.push_back(new CMenuScene());
 
-	m_pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), m_pScene->GetTerrain(), 1);
+	for (const auto& scene : m_vScenes)
+	{
+		scene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+		scene->m_pSpriteFont = m_pSpriteFont;
+	}
+
+	m_pScene = m_vScenes[0]; //시작 메뉴로 설정
+	m_pPlayer = new CPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), m_pScene->GetTerrain(), 1);
 	m_pCamera = m_pPlayer->GetCamera();
 
 	CreateShaderVariables();
@@ -440,6 +450,14 @@ void CGameFramework::BuildObjects()
 	if (m_pScene) m_pScene->ReleaseUploadBuffers();
 
 	m_GameTimer.Reset();
+}
+
+void CGameFramework::BuildFont()
+{
+	CTexture* pFontTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pFontTexture->LoadTextureFromFile(m_pd3dDevice, m_pd3dCommandList, _T("Font/D2coding.dds"), 0);
+	m_pSpriteFont = new CSpriteFont(pFontTexture, 128);
+	m_pSpriteFont->LoadFontData("Font/D2coding.fnt");
 }
 
 void CGameFramework::ReleaseObjects()
