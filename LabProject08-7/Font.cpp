@@ -1,18 +1,89 @@
 #include "stdafx.h"
 #include "Font.h"
+#include "d3dx12.h"
 
 #include <fstream>
 #include <sstream> 
 
-CSpriteFont::CSpriteFont(CTexture* pTexture, int MAX_FONT_CHARS = 128) : m_pTexture(pTexture)
+
+
+CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, CTexture* pTexture, int MAX_CHARS, ID3D12DescriptorHeap* pd3dCbvSrvUavDescriptorHeap, UINT nCbvSrvUavDescriptorIncrementSize)
+	: m_pd3dDevice(pd3dDevice)
+	, m_pd3dCommandList(pd3dCommandList)
+	, m_pTexture(pTexture)
+	, m_MAX_CHARS(MAX_CHARS)
+	, m_pd3dCbvSrvUavDescriptorHeap(pd3dCbvSrvUavDescriptorHeap)
+	, m_nCbvSrvUavDescriptorIncrementSize(nCbvSrvUavDescriptorIncrementSize)
+	, m_vCharInfos(static_cast<size_t>(MAX_CHARS))
 {
-	if (m_pTexture) m_pTexture->AddRef();
-	m_vCharInfos.resize(MAX_FONT_CHARS);
+	if (m_pTexture) { m_pTexture->AddRef(); }
+	m_vCharInfos.resize(MAX_CHARS);
+
+	D3D12_RESOURCE_DESC d3dResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(CB_FONT_INFO) * m_nMaxChars, D3D12_RESOURCE_FLAG_NONE);
+	CD3DX12_HEAP_PROPERTIES d3dHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+
+	HRESULT hResult = m_pd3dDevice->CreateCommittedResource(
+		&d3dHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&d3dResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_pd3dcbFontInfo));
+	
+	m_pd3dcbFontInfo->Map(0, nullptr, reinterpret_cast<void**>(&m_pcbMappedFontInfo));
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc{};
+	SrvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	SrvDesc.Buffer.FirstElement = 0;
+	SrvDesc.Buffer.NumElements = MAX_CHARS;
+	SrvDesc.Buffer.StructureByteStride = sizeof(CB_FONT_INFO);
+	SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	
+	D3D12_CPU_DESCRIPTOR_HANDLE SrvCpuHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	SrvCpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
+
+	m_pd3dDevice->CreateShaderResourceView(m_pd3dcbFontInfo, &SrvDesc, SrvCpuHandle);
+	
+	m_d3dFontSrvGpuDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	m_d3dFontSrvGpuDescriptorHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
+
+	m_pd3dFontVertexBuffer = CreateBufferResource(
+		m_pd3dDevice,
+		m_pd3dCommandList,
+		nullptr,
+		sizeof(FONT_VERTEX) * MAX_CHARS,
+		D3D12_HEAP_TYPE_UPLOAD,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr);
+	m_pd3dFontVertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_pMappedFontVertices));
+
+	m_d3dFontVertexBufferView.BufferLocation = m_pd3dFontVertexBuffer->GetGPUVirtualAddress();
+	m_d3dFontVertexBufferView.StrideInBytes = sizeof(FONT_VERTEX);
+	m_d3dFontVertexBufferView.SizeInBytes = sizeof(FONT_VERTEX) * MAX_CHARS;
 }
 
 CSpriteFont::~CSpriteFont()
 {
 	if(m_pTexture) { m_pTexture->Release();	}
+
+	if(m_pd3dcbFontInfo && m_pcbMappedFontInfo)
+	{
+		m_pd3dcbFontInfo->Unmap(0, nullptr);
+		m_pcbMappedFontInfo = nullptr;
+	}
+	if (m_pd3dcbFontInfo)
+	{
+		m_pd3dcbFontInfo->Unmap(0, nullptr);
+		m_pd3dcbFontInfo->Release();
+	}
+	if (m_pd3dFontVertexBuffer)
+	{
+		m_pd3dFontVertexBuffer->Unmap(0, nullptr);
+		m_pd3dFontVertexBuffer->Release();
+	}
+
 }
 
 bool CSpriteFont::LoadFontData(std::string_view filename)
@@ -22,6 +93,8 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 	if (!file.is_open()) {
 		return false;
 	}
+
+	std::vector<CharInfo> tempCharInfos(static_cast<size_t>(m_MAX_CHARS));
 
 	std::string line;
 	while(std::getline(file, line))
@@ -67,7 +140,7 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 
 			if(id_found && charInfo.id >= 0 && charInfo.id < static_cast<int>(m_vCharInfos.size()))
 			{
-				m_vCharInfos[charInfo.id] = charInfo;
+				tempCharInfos[charInfo.id] = charInfo;
 			}
 			else
 			{
@@ -77,6 +150,10 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 		}
 	}
 	file.close();
+
+	memcpy(m_pcbMappedFontInfo, tempCharInfos.data(), sizeof(CharInfo)* m_MAX_CHARS);
+	m_vCharInfos = std::move(tempCharInfos);
+
 	return true;
 }
 

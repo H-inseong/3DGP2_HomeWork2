@@ -29,7 +29,15 @@ struct CB_FONT_INFO
 
 class CSpriteFont {
 public:
-	CSpriteFont(CTexture* pTexture, int);
+	CSpriteFont(
+		ID3D12Device* pd3dDevice,
+		ID3D12GraphicsCommandList* pd3dCommandList,
+		CTexture* pTexture,
+		int MAX_CHARS = 128,
+		ID3D12DescriptorHeap* pd3dCbvSrvUavDescriptorHeap = nullptr,
+		UINT nCbvSrvUavDescriptorIncrementSize = 0
+		);
+
 	~CSpriteFont();
 
 	bool LoadFontData(std::string_view filename);
@@ -48,4 +56,21 @@ private:
 	int						m_nBase = 0;
 	int						m_nScaleW = 0;
 	int						m_nScaleH = 0;
+
+	ID3D12Device*			m_pd3dDevice = nullptr;
+	ID3D12GraphicsCommandList* m_pd3dCommandList = nullptr;
+	int						m_MAX_CHARS = 128;
+	ID3D12DescriptorHeap*	m_pd3dCbvSrvUavDescriptorHeap = nullptr;
+	UINT					m_nCbvSrvUavDescriptorIncrementSize = 0;
+
+	ID3D12Resource*			m_pd3dcbFontInfo = nullptr;
+	CB_FONT_INFO*			m_pcbMappedFontInfo = nullptr;
+
+	D3D12_GPU_DESCRIPTOR_HANDLE m_d3dFontSrvGpuDescriptorHandle;
+
+	ID3D12Resource*			m_pd3dFontVertexBuffer = nullptr;
+	FONT_VERTEX*			m_pMappedFontVertices = nullptr;
+	D3D12_VERTEX_BUFFER_VIEW	m_d3dFontVertexBufferView;
+
+	UINT 					m_nMaxChars = 0;
 };

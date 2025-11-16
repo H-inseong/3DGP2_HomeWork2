@@ -580,6 +580,7 @@ void CGameFramework::BuildObjects()
 {
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
+	BuildFont();
 	m_nScenes = 3;
 	m_vScenes.push_back(new CStartScene());
 	m_vScenes.push_back(new CGameScene());
@@ -610,10 +611,19 @@ void CGameFramework::BuildObjects()
 
 void CGameFramework::BuildFont()
 {
+	UINT ncbElementBytes = ((sizeof(CB_FONT_INFO) + 255) & ~255);
+	m_pd3dcbFont = ::CreateBufferResource(m_pd3dDevice, m_pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
+	m_pd3dcbFont->Map(0, NULL, (void**)&m_pcbMappedFont);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE d3dSrvCPUDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
 	CTexture* pFontTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pFontTexture->LoadTextureFromFile(m_pd3dDevice, m_pd3dCommandList, _T("Font/D2coding.dds"), 0);
-	m_pSpriteFont = new CSpriteFont(pFontTexture, 128);
+	pFontTexture->LoadTextureFromFile(m_pd3dDevice, m_pd3dCommandList, L"Textures/Font.dds", 0);
+	pFontTexture->CreateShaderResourceView(m_pd3dDevice, &d3dSrvCPUDescriptorHandle, 0);
+
+	m_pSpriteFont = new CSpriteFont(m_pd3dDevice, m_pd3dCommandList, pFontTexture, 128, m_pd3dCbvSrvUavDescriptorHeap, m_nCbvSrvUavDescriptorIncrementSize);
 	m_pSpriteFont->LoadFontData("Font/D2coding.fnt");
+
 }
 
 void CGameFramework::ReleaseObjects()
