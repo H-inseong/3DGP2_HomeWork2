@@ -11,6 +11,22 @@ struct CharInfo {
 	int chnl;
 };
 
+struct FONT_VERTEX
+{
+	XMFLOAT2				m_xmf2Position;
+	XMFLOAT4				m_xmf4Color;
+	UINT					m_nType;
+};
+
+struct CB_FONT_INFO
+{
+	XMFLOAT4				FontColor;
+	XMFLOAT2				ScreenSize;
+	XMFLOAT2				TextureSize;
+	float 					Scale;
+	XMFLOAT2				StartPos;
+};
+
 class CSpriteFont {
 public:
 	CSpriteFont(CTexture* pTexture, int);

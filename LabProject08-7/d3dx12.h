@@ -2127,7 +2127,13 @@ inline HRESULT D3DX12SerializeVersionedRootSignature(
                         {
                             if (desc_1_1.pParameters[n].ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
                             {
-                                HeapFree(GetProcessHeap(), 0, reinterpret_cast<void*>(const_cast<D3D12_DESCRIPTOR_RANGE*>(pParameters_1_0[n].DescriptorTable.pDescriptorRanges)));
+                                // pDescriptorRanges는 const 포인터로 저장되어 있으므로 로컬 변수에 추출하고 null 체크 후 해제합니다.
+                                const D3D12_DESCRIPTOR_RANGE* pDescriptorRanges = pParameters_1_0[n].DescriptorTable.pDescriptorRanges;
+                                if (pDescriptorRanges != nullptr)
+                                {
+                                    void* pFree = reinterpret_cast<void*>(const_cast<D3D12_DESCRIPTOR_RANGE*>(pDescriptorRanges));
+                                    HeapFree(GetProcessHeap(), 0, pFree);
+                                }
                             }
                         }
                         HeapFree(GetProcessHeap(), 0, pParameters);

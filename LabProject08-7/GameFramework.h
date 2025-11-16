@@ -1,5 +1,6 @@
 #pragma once
 
+#include "d3dx12.h"
 #include "Timer.h"
 #include "Player.h"
 #include "Scene.h"

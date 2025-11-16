@@ -14,8 +14,8 @@ struct GS_INPUT
 
 struct PS_INPUT
 {
-    float2 Position : SV_POSITION;
-    float4 UV : TEXCOORD;
+    float4 Position : SV_POSITION;
+    float2 UV : TEXCOORD;
     float4 Color : COLOR;
 };
 
@@ -48,7 +48,7 @@ StructuredBuffer<CharInfo> gCharInfos : register(t1);
 //////////////////////////////////////////////////////////////////////////////////
 GS_INPUT VS_Font(VS_INPUT input)
 {
-    GS_INPUT output = {};
+    GS_INPUT output;
     output.Position = float4(input.Position, 0.0f, 1.0f);
     output.Color = input.Color;
     output.Type = input.Type;
@@ -70,7 +70,7 @@ void GS_Font(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> OutStream)
     float2 offset = float2(charInfo.xoffset, charInfo.yoffset) * Scale;
     float2 pos = input[0].Position.xy + offset;
     
-    float positions[4];
+    float2 positions[4];
     //좌상단
     positions[0] = pos;
     //우상단
@@ -90,19 +90,19 @@ void GS_Font(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> OutStream)
     
     
     Out.Position = ScreenToClip(positions[0], ScreenSize);
-    Out.UV = float4(LeftTop, 0.0f, 0.0f);
+    Out.UV = LeftTop;
     OutStream.Append(Out);
     
     Out.Position = ScreenToClip(positions[1], ScreenSize);
-    Out.UV = float4(RightTop, 0.0f, 0.0f);
+    Out.UV = RightTop;
     OutStream.Append(Out);
     
     Out.Position = ScreenToClip(positions[2], ScreenSize);
-    Out.UV = float4(LeftBottom, 0.0f, 0.0f);
+    Out.UV = LeftBottom;
     OutStream.Append(Out);
     
     Out.Position = ScreenToClip(positions[3], ScreenSize);
-    Out.UV = float4(RightBottom, 0.0f, 0.0f);
+    Out.UV = RightBottom;
     OutStream.Append(Out);
     
     OutStream.RestartStrip();
