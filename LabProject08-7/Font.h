@@ -52,6 +52,7 @@ public:
 private:
 	CTexture*				m_pTexture = nullptr;
 	std::vector<CharInfo>	m_vCharInfos;
+
 	int						m_nLineHeight = 0;
 	int						m_nBase = 0;
 	int						m_nScaleW = 0;

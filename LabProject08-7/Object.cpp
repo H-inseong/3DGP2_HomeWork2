@@ -136,7 +136,7 @@ D3D12_SHADER_RESOURCE_VIEW_DESC CTexture::GetShaderResourceViewDesc(int nIndex)
 	ID3D12Resource* pShaderResource = GetResource(nIndex);
 	D3D12_RESOURCE_DESC d3dResourceDesc = pShaderResource->GetDesc();
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC d3dShaderResourceViewDesc;
+	D3D12_SHADER_RESOURCE_VIEW_DESC d3dShaderResourceViewDesc{};
 	d3dShaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	int nTextureType = GetTextureType(nIndex);

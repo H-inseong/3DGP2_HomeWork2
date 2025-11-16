@@ -19,8 +19,8 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	if (m_pTexture) { m_pTexture->AddRef(); }
 	m_vCharInfos.resize(MAX_CHARS);
 
-	D3D12_RESOURCE_DESC d3dResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(CB_FONT_INFO) * m_MAX_CHARS, D3D12_RESOURCE_FLAG_NONE);
-	CD3DX12_HEAP_PROPERTIES d3dHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	D3D12_RESOURCE_DESC d3dResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(CB_FONT_INFO) * m_MAX_CHARS);
+	D3D12_HEAP_PROPERTIES d3dHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 
 	HRESULT hResult = m_pd3dDevice->CreateCommittedResource(
 		&d3dHeapProperties,
