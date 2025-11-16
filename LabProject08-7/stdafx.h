@@ -284,3 +284,10 @@ namespace Plane
 		return(xmf4Result);
 	}
 }
+
+struct FONT_VERTEX
+{
+	XMFLOAT2						m_xmf2Position;
+	XMFLOAT4						m_xmf4Color;
+	UINT							m_nType;
+};

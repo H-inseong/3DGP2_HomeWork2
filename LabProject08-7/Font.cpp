@@ -82,4 +82,24 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 
 void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::string_view text, XMFLOAT2 position, XMFLOAT4 color, float fScale)
 {
+	if (!m_pTexture) return;
+	float x = position.x;
+	float y = position.y;
+	pd3dCommandList->SetPipelineState(m_pTexture->GetPipelineState());
+	pd3dCommandList->SetGraphicsRootSignature(m_pTexture->GetRootSignature());
+	m_pTexture->SetTexture(pd3dCommandList, 0);
+	for (char c : text)
+	{
+		if (c < 0 || c >= static_cast<char>(m_vCharInfos.size())) continue;
+		CharInfo& charInfo = m_vCharInfos[static_cast<size_t>(c)];
+		float u0 = static_cast<float>(charInfo.x) / static_cast<float>(m_nScaleW);
+		float v0 = static_cast<float>(charInfo.y) / static_cast<float>(m_nScaleH);
+		float u1 = static_cast<float>(charInfo.x + charInfo.width) / static_cast<float>(m_nScaleW);
+		float v1 = static_cast<float>(charInfo.y + charInfo.height) / static_cast<float>(m_nScaleH);
+		float w = charInfo.width * fScale;
+		float h = charInfo.height * fScale;
+		// Draw character quad here using the calculated UVs and dimensions
+		// This part is dependent on your rendering setup and is omitted for brevity
+		x += charInfo.xadvance * fScale;
+	}
 }

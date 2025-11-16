@@ -114,5 +114,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders.hlsl" />
+    <FxCompile Include="Font.hlsl" />
   </ItemGroup>
 </Project>
