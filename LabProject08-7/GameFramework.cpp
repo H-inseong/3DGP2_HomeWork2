@@ -34,6 +34,16 @@ CGameFramework::CGameFramework()
 
 	m_pScene = NULL;
 	m_pPlayer = NULL;
+	m_pSpriteFont = NULL;
+
+	m_pd3dCbvSrvUavDescriptorHeap = NULL;
+	m_nCbvSrvUavDescriptorIncrementSize = 0;
+
+	m_pd3dFontPipelineState = NULL;
+	m_pd3dFontRootSignature = NULL;
+
+	m_pd3dcbFont = NULL;
+	m_pcbMappedFont = NULL;
 
 	_tcscpy_s(m_pszCaption, _T("LabProject ("));
 }
@@ -400,6 +410,11 @@ void CGameFramework::OnDestroy()
 
 	for (int i = 0; i < m_nSwapChainBuffers; i++) if (m_ppd3dSwapChainBackBuffers[i]) m_ppd3dSwapChainBackBuffers[i]->Release();
 	if (m_pd3dRtvDescriptorHeap) m_pd3dRtvDescriptorHeap->Release();
+
+	if (m_pd3dCbvSrvUavDescriptorHeap) m_pd3dCbvSrvUavDescriptorHeap->Release();
+	if (m_pd3dcbFont) m_pd3dcbFont->Release();
+	if (m_pd3dFontRootSignature) m_pd3dFontRootSignature->Release();
+	if (m_pd3dFontPipelineState) m_pd3dFontPipelineState->Release();
 
 	if (m_pd3dCommandAllocator) m_pd3dCommandAllocator->Release();
 	if (m_pd3dCommandQueue) m_pd3dCommandQueue->Release();

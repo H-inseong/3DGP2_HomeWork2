@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "Player.h"
 #include "Scene.h"
+#include "Font.h"
 
 struct CB_FRAMEWORK_INFO
 {
@@ -31,6 +32,7 @@ public:
 	void CreateCommandQueueAndList();
 
 	void CreateRtvAndDsvDescriptorHeaps();
+	void CreateCbvSrvUavDescriptorHeaps();
 
 	void CreateRenderTargetViews();
 	void CreateDepthStencilView();
@@ -45,6 +47,8 @@ public:
     void AnimateObjects();
     void FrameAdvance();
 
+	void RenderUI();
+
 	void WaitForGpuComplete();
 	void MoveToNextFrame();
 
@@ -55,6 +59,8 @@ public:
 	void CreateShaderVariables();
 	void UpdateShaderVariables();
 	void ReleaseShaderVariables();
+
+	void CreateFontRootSignatureAndPSO();
 
 private:
 	HINSTANCE					m_hInstance;
@@ -114,5 +120,14 @@ private:
 protected:
 	ID3D12Resource*				m_pd3dcbFrameworkInfo = NULL;
 	CB_FRAMEWORK_INFO*			m_pcbMappedFrameworkInfo = NULL;
+
+	ID3D12DescriptorHeap*		m_pd3dCbvSrvUavDescriptorHeap = NULL;
+	UINT						m_nCbvSrvUavDescriptorIncrementSize = 0;
+
+	ID3D12RootSignature*		m_pd3dFontRootSignature = NULL;
+	ID3D12PipelineState*		m_pd3dFontPipelineState = NULL;
+
+	ID3D12Resource*				m_pd3dcbFont = NULL;
+	CB_FONT_INFO*				m_pcbMappedFont = NULL;
 };
 
