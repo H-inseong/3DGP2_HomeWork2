@@ -192,7 +192,7 @@ void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::st
 
 	for (char c : text)
 	{
-		if (c < 0 || c >= static_cast<char>(m_vCharInfos.size())) continue;
+		if (c < 0 || c >= static_cast<unsigned char>(m_vCharInfos.size())) continue;
 		Fnt_Data& charInfo = m_vCharInfos[static_cast<size_t>(c)];
 		FONT_VERTEX* pCurrentVertex = m_pMappedFontVertices + nOffset;
 

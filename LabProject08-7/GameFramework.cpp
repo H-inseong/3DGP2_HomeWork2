@@ -857,7 +857,7 @@ void CGameFramework::RenderUI()
 	m_pcbMappedFont->TextureSize = XMFLOAT2(512.0f, 512.0f);
 	m_pcbMappedFont->Scale = 1.0f;
 
-	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 100.0f);
+	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 1.0f);
 
 }
 
