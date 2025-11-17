@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "GameFramework.h"
 
+
 CGameFramework::CGameFramework()
 {
 	m_pdxgiFactory = NULL;
@@ -49,11 +50,13 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	CreateDirect3DDevice();
 	CreateCommandQueueAndList();
 	CreateRtvAndDsvDescriptorHeaps();
+	CreateCbvSrvUavDescriptorHeaps();
 	CreateSwapChain();
 	CreateDepthStencilView();
-
+	CreateFontRootSignatureAndPSO();
 	CoInitialize(NULL);
 
+	BuildFont();
 	BuildObjects();
 
 	return(true);
@@ -366,6 +369,197 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 	return(0);
 }
 
+void CGameFramework::CreateCbvSrvUavDescriptorHeaps()
+{
+	D3D12_DESCRIPTOR_HEAP_DESC d3dDescriptorHeapDesc;
+	::ZeroMemory(&d3dDescriptorHeapDesc, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
+	d3dDescriptorHeapDesc.NumDescriptors = 3;
+	d3dDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	d3dDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	d3dDescriptorHeapDesc.NodeMask = 0;
+	HRESULT hResult = m_pd3dDevice->CreateDescriptorHeap(&d3dDescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)&m_pd3dCbvSrvUavDescriptorHeap);
+	m_nCbvSrvUavDescriptorIncrementSize = m_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+void CGameFramework::BuildFont()
+{
+	UINT ncbElementBytes = ((sizeof(FONT_INFO) + 255) & ~255);
+	m_pd3dcbFont = ::CreateBufferResource(m_pd3dDevice, m_pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
+	m_pd3dcbFont->Map(0, NULL, (void**)&m_pcbMappedFont);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE d3dSrvCPUDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+	CTexture* pFontTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pFontTexture->LoadTextureFromDDSFile(m_pd3dDevice, m_pd3dCommandList, L"Font/D2coding_0.dds", RESOURCE_TEXTURE2D, 0);
+	pFontTexture->CreateShaderResourceView(m_pd3dDevice, d3dSrvCPUDescriptorHandle, 0);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC d3dCbvDesc;
+	d3dCbvDesc.BufferLocation = m_pd3dcbFont->GetGPUVirtualAddress();
+	d3dCbvDesc.SizeInBytes = ncbElementBytes;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE d3dCbvCPUDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	d3dCbvCPUDescriptorHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 2;
+
+	m_pd3dDevice->CreateConstantBufferView(&d3dCbvDesc, d3dCbvCPUDescriptorHandle);
+
+	m_pSpriteFont = new CSpriteFont(m_pd3dDevice, m_pd3dCommandList,
+		pFontTexture, 128,
+		m_pd3dCbvSrvUavDescriptorHeap,
+		m_nCbvSrvUavDescriptorIncrementSize);
+
+	m_pSpriteFont->LoadFontData("Font/D2coding.fnt");
+
+}
+
+void CGameFramework::RenderUI()
+{
+	ID3D12DescriptorHeap* ppd3dDescriptorHeaps[] = { m_pd3dCbvSrvUavDescriptorHeap };
+	m_pd3dCommandList->SetDescriptorHeaps(_countof(ppd3dDescriptorHeaps), ppd3dDescriptorHeaps);
+
+	m_pd3dCommandList->SetPipelineState(m_pd3dFontPipelineState);
+	m_pd3dCommandList->SetGraphicsRootSignature(m_pd3dFontRootSignature);
+	D3D12_GPU_DESCRIPTOR_HANDLE d3dGpuHandle = m_pd3dCbvSrvUavDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	m_pd3dCommandList->SetGraphicsRootDescriptorTable(0, d3dGpuHandle); //폰트 텍스쳐
+	d3dGpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize;
+	m_pd3dCommandList->SetGraphicsRootDescriptorTable(1, d3dGpuHandle); //폰트 정보
+	d3dGpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize;
+	m_pd3dCommandList->SetGraphicsRootDescriptorTable(2, d3dGpuHandle); //CBFONTINFO
+
+	m_pcbMappedFont->ScreenSize = XMFLOAT2((float)m_nWndClientWidth, (float)m_nWndClientHeight);
+	m_pcbMappedFont->TextureSize = XMFLOAT2(512.0f, 512.0f);
+	m_pcbMappedFont->Scale = 1.0f;
+
+	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 1.0f);
+
+}
+
+void CGameFramework::CreateFontRootSignatureAndPSO()
+{
+
+	D3D12_DESCRIPTOR_RANGE DescriptorRanges[3]{};
+	// 폰트 텍스쳐 S0
+	DescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	DescriptorRanges[0].NumDescriptors = 1;
+	DescriptorRanges[0].BaseShaderRegister = 0;
+	DescriptorRanges[0].RegisterSpace = 0;
+	DescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	// 폰트 정보 S1
+	DescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	DescriptorRanges[1].NumDescriptors = 1;
+	DescriptorRanges[1].BaseShaderRegister = 1;
+	DescriptorRanges[1].RegisterSpace = 0;
+	DescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	// CBFONTINFO C0
+	DescriptorRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	DescriptorRanges[2].NumDescriptors = 1;
+	DescriptorRanges[2].BaseShaderRegister = 0;
+	DescriptorRanges[2].RegisterSpace = 0;
+	DescriptorRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	D3D12_ROOT_PARAMETER RootParameters[3];
+
+	for (int i = 0; i < 3; i++)
+	{
+		RootParameters[i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		RootParameters[i].DescriptorTable.NumDescriptorRanges = 1;
+		RootParameters[i].DescriptorTable.pDescriptorRanges = &DescriptorRanges[i];
+		RootParameters[i].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
+
+
+	//스태틱 샘플러 S0
+	D3D12_STATIC_SAMPLER_DESC StaticSamplerDesc{};
+	StaticSamplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	StaticSamplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	StaticSamplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	StaticSamplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	StaticSamplerDesc.MipLODBias = 0;
+	StaticSamplerDesc.MaxAnisotropy = 1;
+	StaticSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	StaticSamplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	StaticSamplerDesc.MinLOD = 0.0f;
+	StaticSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	StaticSamplerDesc.ShaderRegister = 0;
+	StaticSamplerDesc.RegisterSpace = 0;
+	StaticSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc;
+	::ZeroMemory(&RootSignatureDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
+	RootSignatureDesc.NumParameters = _countof(RootParameters);
+	RootSignatureDesc.pParameters = RootParameters;
+	RootSignatureDesc.NumStaticSamplers = 1;
+	RootSignatureDesc.pStaticSamplers = &StaticSamplerDesc;
+	RootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	ID3DBlob* SignatureBlob = NULL;
+	ID3DBlob* ErrorBlob = NULL;
+	HRESULT hResult = D3D12SerializeRootSignature(&RootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
+	if (ErrorBlob)
+	{
+		OutputDebugStringA((char*)ErrorBlob->GetBufferPointer());
+	}
+	m_pd3dDevice->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&m_pd3dFontRootSignature);
+
+	ID3DBlob* VertexShaderBlob = NULL;
+	ID3DBlob* GeometryShaderBlob = NULL;
+	ID3DBlob* PixelShaderBlob = NULL;
+
+	D3DCompileFromFile(L"Font.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VS_Font", "vs_5_1", 0, 0, &VertexShaderBlob, &ErrorBlob);
+	if (ErrorBlob) { OutputDebugStringA((char*)ErrorBlob->GetBufferPointer()); }
+
+	D3DCompileFromFile(L"Font.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "GS_Font", "gs_5_1", 0, 0, &GeometryShaderBlob, &ErrorBlob);
+	if (ErrorBlob) { OutputDebugStringA((char*)ErrorBlob->GetBufferPointer()); }
+
+	D3DCompileFromFile(L"Font.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PS_Font", "ps_5_1", 0, 0, &PixelShaderBlob, &ErrorBlob);
+	if (ErrorBlob) { OutputDebugStringA((char*)ErrorBlob->GetBufferPointer()); }
+
+	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
+	{
+		{"POSITION", 0 , DXGI_FORMAT_R32G32_FLOAT,		0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"COLOR", 0 ,	DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"TYPE", 0 ,	DXGI_FORMAT_R32_UINT,		0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+	};
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineStateDesc{};
+	PipelineStateDesc.InputLayout.pInputElementDescs = InputElementDesc;
+	PipelineStateDesc.InputLayout.NumElements = _countof(InputElementDesc);
+	PipelineStateDesc.pRootSignature = m_pd3dFontRootSignature;
+	PipelineStateDesc.VS.pShaderBytecode = VertexShaderBlob->GetBufferPointer();
+	PipelineStateDesc.VS.BytecodeLength = VertexShaderBlob->GetBufferSize();
+	PipelineStateDesc.GS.pShaderBytecode = GeometryShaderBlob->GetBufferPointer();
+	PipelineStateDesc.GS.BytecodeLength = GeometryShaderBlob->GetBufferSize();
+	PipelineStateDesc.PS.pShaderBytecode = PixelShaderBlob->GetBufferPointer();
+	PipelineStateDesc.PS.BytecodeLength = PixelShaderBlob->GetBufferSize();
+	PipelineStateDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	PipelineStateDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	PipelineStateDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	PipelineStateDesc.DepthStencilState.DepthEnable = FALSE;
+	PipelineStateDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	PipelineStateDesc.SampleMask = UINT_MAX;
+	PipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+	PipelineStateDesc.NumRenderTargets = 1;
+	PipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	PipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	PipelineStateDesc.SampleDesc.Count = (m_bMsaa4xEnable) ? 4 : 1;
+	PipelineStateDesc.SampleDesc.Quality = (m_bMsaa4xEnable) ? (m_nMsaa4xQualityLevels - 1) : 0;
+
+	D3D12_RENDER_TARGET_BLEND_DESC RenderTargetBlendDesc;
+	RenderTargetBlendDesc.BlendEnable = TRUE;
+	RenderTargetBlendDesc.LogicOpEnable = FALSE;
+	RenderTargetBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	RenderTargetBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	RenderTargetBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+	RenderTargetBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	RenderTargetBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	RenderTargetBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	RenderTargetBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	RenderTargetBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	PipelineStateDesc.BlendState.RenderTarget[0] = RenderTargetBlendDesc;
+	hResult = m_pd3dDevice->CreateGraphicsPipelineState(&PipelineStateDesc, IID_PPV_ARGS(&m_pd3dFontPipelineState));
+
+}
+
 void CGameFramework::OnDestroy()
 {
     ReleaseObjects();
@@ -549,6 +743,8 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 #endif
 	if (m_pPlayer) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
+
+	RenderUI();
 
 	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	d3dResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;

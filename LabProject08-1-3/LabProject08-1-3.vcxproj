@@ -104,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -130,6 +131,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DDSTextureLoader12.h" />
+    <ClInclude Include="Font.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="LabProject08-1-3.h" />
     <ClInclude Include="Mesh.h" />
@@ -146,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DDSTextureLoader12.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="LabProject08-1-3.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -165,6 +168,10 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Font.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VS_Font</EntryPointName>
+    </FxCompile>
     <FxCompile Include="Light.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>

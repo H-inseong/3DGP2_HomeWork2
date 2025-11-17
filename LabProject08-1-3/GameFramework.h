@@ -1,11 +1,13 @@
 #pragma once
 
-#define FRAME_BUFFER_WIDTH		640
-#define FRAME_BUFFER_HEIGHT		480
+#define FRAME_BUFFER_WIDTH		1280
+#define FRAME_BUFFER_HEIGHT		720
 
 #include "Timer.h"
 #include "Player.h"
 #include "Scene.h"
+#include "Font.h"
+#include "d3dx12.h"
 
 class CGameFramework
 {
@@ -40,6 +42,11 @@ public:
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+
+	void CreateCbvSrvUavDescriptorHeaps();
+	void BuildFont();
+	void RenderUI();
+	void CreateFontRootSignatureAndPSO();
 
 private:
 	HINSTANCE					m_hInstance;
@@ -79,11 +86,24 @@ private:
 	CGameTimer					m_GameTimer;
 
 	CScene						*m_pScene = NULL;
+	std::vector<CScene*>		m_vScenes = {};
+	int							m_nScenes = 0;
+
 	CPlayer						*m_pPlayer = NULL;
 	CCamera						*m_pCamera = NULL;
 
 	POINT						m_ptOldCursorPos;
-
 	_TCHAR						m_pszFrameRate[70];
+
+	CSpriteFont*				m_pSpriteFont = NULL;
+protected:
+	ID3D12DescriptorHeap*		m_pd3dCbvSrvUavDescriptorHeap = NULL;
+	UINT						m_nCbvSrvUavDescriptorIncrementSize = 0;
+
+	ID3D12RootSignature*		m_pd3dFontRootSignature = NULL;
+	ID3D12PipelineState*		m_pd3dFontPipelineState = NULL;
+
+	ID3D12Resource*				m_pd3dcbFont = NULL;
+	FONT_INFO*					m_pcbMappedFont = NULL;
 };
 

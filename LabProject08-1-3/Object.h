@@ -72,6 +72,8 @@ public:
 	int LoadTextureFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, CGameObject* pParent, FILE* pInFile, UINT nIndex);
 //	int LoadTextureFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, CGameObject* pParent, FILE* pInFile, CShader* pShader, UINT nIndex);
 
+	void CreateShaderResourceView(ID3D12Device* pd3dDevice, D3D12_CPU_DESCRIPTOR_HANDLE d3dSrvCpuHandle, int nIndex);
+
 	void SetRootParameterIndex(int nIndex, UINT nRootParameterIndex);
 	void SetGpuDescriptorHandle(int nIndex, D3D12_GPU_DESCRIPTOR_HANDLE d3dSrvGpuDescriptorHandle);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(int nIndex) { return(m_pd3dSrvGpuDescriptorHandles[nIndex]); }

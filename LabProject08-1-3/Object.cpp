@@ -58,6 +58,13 @@ CTexture::~CTexture()
 	if (m_pd3dSamplerGpuDescriptorHandles) delete[] m_pd3dSamplerGpuDescriptorHandles;
 }
 
+void CTexture::CreateShaderResourceView(ID3D12Device* pd3dDevice, D3D12_CPU_DESCRIPTOR_HANDLE d3dSrvCpuHandle, int nIndex)
+{
+	ID3D12Resource* pShaderResource = GetResource(nIndex);
+	D3D12_SHADER_RESOURCE_VIEW_DESC d3dShaderResourceViewDesc = GetShaderResourceViewDesc(nIndex);
+	pd3dDevice->CreateShaderResourceView(pShaderResource, &d3dShaderResourceViewDesc, d3dSrvCpuHandle);
+}
+
 void CTexture::SetRootParameterIndex(int nIndex, UINT nRootParameterIndex)
 {
 	m_pnRootParameterIndices[nIndex] = nRootParameterIndex;
