@@ -53,12 +53,12 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	CreateCbvSrvUavDescriptorHeaps();
 	CreateSwapChain();
 	CreateDepthStencilView();
-	CreateFontRootSignatureAndPSO();
 	CoInitialize(NULL);
 
 	BuildFont();
 	BuildObjects();
 
+	CreateFontRootSignatureAndPSO();
 	return(true);
 }
 
@@ -429,7 +429,7 @@ void CGameFramework::RenderUI()
 	m_pcbMappedFont->TextureSize = XMFLOAT2(512.0f, 512.0f);
 	m_pcbMappedFont->Scale = 1.0f;
 
-	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 1.0f);
+	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
 
 }
 
@@ -562,6 +562,16 @@ void CGameFramework::CreateFontRootSignatureAndPSO()
 
 void CGameFramework::OnDestroy()
 {
+	if (m_pSpriteFont) delete m_pSpriteFont;
+	if (m_pd3dcbFont)
+		{
+		    m_pd3dcbFont->Unmap(0, NULL);
+		    m_pd3dcbFont->Release();
+		}
+	if (m_pd3dFontRootSignature) m_pd3dFontRootSignature->Release();
+	if (m_pd3dFontPipelineState) m_pd3dFontPipelineState->Release();
+	if (m_pd3dCbvSrvUavDescriptorHeap) m_pd3dCbvSrvUavDescriptorHeap->Release();
+
     ReleaseObjects();
 
 	::CloseHandle(m_hFenceEvent);
