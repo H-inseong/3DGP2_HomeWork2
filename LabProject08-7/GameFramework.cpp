@@ -298,7 +298,7 @@ void CGameFramework::CreateFontRootSignatureAndPSO()
 	StaticSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
 	StaticSamplerDesc.ShaderRegister = 0;
 	StaticSamplerDesc.RegisterSpace = 0;
-	StaticSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	StaticSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc;
 	::ZeroMemory(&RootSignatureDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
@@ -332,9 +332,9 @@ void CGameFramework::CreateFontRootSignatureAndPSO()
 
 	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
 	{
-		{"POSTION", 0 , DXGI_FORMAT_R32G32_FLOAT,		0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"POSITION", 0 , DXGI_FORMAT_R32G32_FLOAT,		0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 		{"COLOR", 0 ,	DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-		{"TYPE", 0 ,	DXGI_FORMAT_R32G32_FLOAT,		0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+		{"TYPE", 0 ,	DXGI_FORMAT_R32_UINT,		0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 	};
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineStateDesc {};
@@ -373,7 +373,7 @@ void CGameFramework::CreateFontRootSignatureAndPSO()
 	RenderTargetBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 	PipelineStateDesc.BlendState.RenderTarget[0] = RenderTargetBlendDesc;
-
+	hResult = m_pd3dDevice->CreateGraphicsPipelineState(&PipelineStateDesc, IID_PPV_ARGS(&m_pd3dFontPipelineState));
 }
 
 void CGameFramework::CreateRenderTargetViews()
@@ -785,6 +785,8 @@ void CGameFramework::FrameAdvance()
 #endif
 	m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
 
+	RenderUI();
+
 	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	d3dResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	d3dResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -826,5 +828,12 @@ void CGameFramework::FrameAdvance()
 
 void CGameFramework::RenderUI()
 {
+	ID3D12DescriptorHeap* ppd3dDescriptorHeaps[] = { m_pd3dCbvSrvUavDescriptorHeap };
+	m_pd3dCommandList->SetDescriptorHeaps(_countof(ppd3dDescriptorHeaps), ppd3dDescriptorHeaps);
+
+	m_pd3dCommandList->SetPipelineState(m_pd3dFontPipelineState);
+	m_pd3dCommandList->SetGraphicsRootSignature(m_pd3dFontRootSignature);
+	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(10.0f, 10.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 1.0f);
+
 }
 
