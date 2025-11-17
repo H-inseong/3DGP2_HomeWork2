@@ -237,3 +237,40 @@ float4 PSTerrain(VS_TERRAIN_OUTPUT input) : SV_TARGET
 
 	return(cColor);
 }
+
+//////////////////////////////////////////////////////////////
+
+cbuffer cbBillboardInfo : register(b3)
+{
+	matrix					gmtxBillboard : packoffset(c0);
+};
+
+struct GS_INPUT
+{
+    float4 position : POSITION;
+};
+
+struct PS_INPUT
+{
+    float4 position : SV_POSITION;
+    float2 uv : TEXCOORD;
+};
+
+GS_INPUT VS_Billboard(VS_SPRITE_TEXTURED_INPUT input)
+{
+	GS_INPUT output;
+	output.position = mul(mul(float4(input.position, 1.0f), gmtxBillboard), gmtxView);
+	return output;
+}
+
+[maxvertexcount(4)]
+void GS_Billboard(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> outputStream)
+{
+    float3 cameraRight = float3(gmtxView._11, gmtxView._21, gmtxView._31);
+	float3 cameraUp = float3(gmtxView._12, gmtxView._22, gmtxView._32);
+	
+	float3 billboardCenter = input[0].position.xyz;
+    float halfWidth = gBillboardSize.x * 0.5f;
+    float halfHeight = gBillboardSize.y * 0.5f;
+
+}
