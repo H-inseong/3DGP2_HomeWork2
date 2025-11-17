@@ -46,6 +46,7 @@ void CMesh::ReleaseUploadBuffers()
 	}
 }
 
+
 void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, int nSubSet)
 {
 	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
@@ -737,3 +738,38 @@ void CHeightMapGridMesh::Render(ID3D12GraphicsCommandList* pd3dCommandList, int 
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+CBillboardPointListMesh::CBillboardPointListMesh(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const std::vector<XMFLOAT3>& points) : CMesh(pd3dDevice, pd3dCommandList)
+{
+	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+
+	m_nVertices = static_cast<int>(points.size());
+	m_nOffset = 0;
+	m_nSlot = 0;
+	m_pxmf3Positions = new XMFLOAT3[m_nVertices];
+	if( m_nVertices > 0 )
+	{
+		m_pxmf3Positions = new XMFLOAT3[m_nVertices];
+		std::copy(points.begin(), points.end(), m_pxmf3Positions);
+
+		m_pd3dPositionBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList,
+														m_pxmf3Positions, sizeof(XMFLOAT3) * m_nVertices,
+														D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dPositionUploadBuffer);
+
+		m_d3dPositionBufferView.BufferLocation = m_pd3dPositionBuffer->GetGPUVirtualAddress();
+		m_d3dPositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
+		m_d3dPositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_nVertices;
+	}
+}
+
+CBillboardPointListMesh::~CBillboardPointListMesh()
+{
+}
+
+void CBillboardPointListMesh::Render(ID3D12GraphicsCommandList * pd3dCommandList, int nSubSet)
+{
+    pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dPositionBufferView);
+    pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
+    pd3dCommandList->DrawInstanced(m_nVertices, 1, m_nOffset, 0);
+}
