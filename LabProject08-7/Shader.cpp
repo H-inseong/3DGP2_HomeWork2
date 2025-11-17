@@ -346,7 +346,7 @@ void CObjectsShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera 
 {
 	CTexturedShader::Render(pd3dCommandList, pCamera);
 
-	for (int j = 0; j < m_nObjects; j++)
+	for (int j = 0; j < m_nObjects; j += 30)
 	{
 		if (m_ppObjects[j]) m_ppObjects[j]->Render(pd3dCommandList, pCamera);
 	}
@@ -571,7 +571,7 @@ void CBillboardObjectsShader::ReleaseObjects()
 void CBillboardObjectsShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
 {
 	XMFLOAT3 xmf3CameraPosition = pCamera->GetPosition();
-	for (int j = 0; j < m_nObjects; j++)
+	for (int j = 0; j < m_nObjects; j += 30)
 	{
 		if (m_ppObjects[j]) m_ppObjects[j]->SetLookAt(xmf3CameraPosition, XMFLOAT3(0.0f, 1.0f, 0.0f));
 	}
