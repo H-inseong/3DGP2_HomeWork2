@@ -31,7 +31,7 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	::ZeroMemory(&d3dResourceDesc, sizeof(D3D12_RESOURCE_DESC));
 	d3dResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	d3dResourceDesc.Alignment = 0;
-	d3dResourceDesc.Width = sizeof(CB_FONT_INFO) * m_MAX_CHARS;
+	d3dResourceDesc.Width = sizeof(Fnt_Data) * m_MAX_CHARS;
 	d3dResourceDesc.Height = 1;
 	d3dResourceDesc.DepthOrArraySize = 1;
 	d3dResourceDesc.MipLevels = 1;
@@ -48,11 +48,11 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		__uuidof(ID3D12Resource),
-		(void**)&m_pd3dcbFontInfo);
+		(void**)&m_pd3dcbFntInfo);
 
 	
-	if (m_pd3dcbFontInfo) {
-		m_pd3dcbFontInfo->Map(0, nullptr, reinterpret_cast<void**>(&m_pcbMappedFontInfo));
+	if (m_pd3dcbFntInfo) {
+		m_pd3dcbFntInfo->Map(0, nullptr, reinterpret_cast<void**>(&m_pcbMappedFntInfo));
 	} else {
 		// 에러 처리
 	}
@@ -62,7 +62,7 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	SrvDesc.Buffer.FirstElement = 0;
 	SrvDesc.Buffer.NumElements = m_MAX_CHARS;
-	SrvDesc.Buffer.StructureByteStride = sizeof(CB_FONT_INFO);
+	SrvDesc.Buffer.StructureByteStride = sizeof(Fnt_Data);
 	SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 	
@@ -70,12 +70,12 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	SrvCpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
 
 	HRESULT a = pd3dDevice->GetDeviceRemovedReason();
-	m_pd3dDevice->CreateShaderResourceView(m_pd3dcbFontInfo, &SrvDesc, SrvCpuHandle);
+	m_pd3dDevice->CreateShaderResourceView(m_pd3dcbFntInfo, &SrvDesc, SrvCpuHandle);
 	a = pd3dDevice->GetDeviceRemovedReason();
 	m_d3dFontSrvGpuDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	m_d3dFontSrvGpuDescriptorHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
 
-	UINT nBufferSize = sizeof(FONT_VERTEX) * m_MAX_CHARS;
+	UINT nBufferSize = sizeof(FONT_VERTEX) * m_MAX_CHARS;	// 한 문장에 최대 작성 가능한 문자 수
 	m_pd3dFontVertexBuffer = ::CreateBufferResource(
 		m_pd3dDevice,
 		m_pd3dCommandList,
@@ -96,15 +96,15 @@ CSpriteFont::~CSpriteFont()
 {
 	if(m_pTexture) { m_pTexture->Release();	}
 
-	if(m_pd3dcbFontInfo && m_pcbMappedFontInfo)
+	if(m_pd3dcbFntInfo && m_pcbMappedFntInfo)
 	{
-		m_pd3dcbFontInfo->Unmap(0, nullptr);
-		m_pcbMappedFontInfo = nullptr;
+		m_pd3dcbFntInfo->Unmap(0, nullptr);
+		m_pcbMappedFntInfo = nullptr;
 	}
-	if (m_pd3dcbFontInfo)
+	if (m_pd3dcbFntInfo)
 	{
-		m_pd3dcbFontInfo->Unmap(0, nullptr);
-		m_pd3dcbFontInfo->Release();
+		m_pd3dcbFntInfo->Unmap(0, nullptr);
+		m_pd3dcbFntInfo->Release();
 	}
 	if (m_pd3dFontVertexBuffer)
 	{
@@ -122,7 +122,7 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 		return false;
 	}
 
-	std::vector<CharInfo> tempCharInfos(static_cast<size_t>(m_MAX_CHARS));
+	std::vector<Fnt_Data> tempCharInfos(static_cast<size_t>(m_MAX_CHARS));
 
 	std::string line;
 	while(std::getline(file, line))
@@ -144,7 +144,7 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 		}
 		else if (type == "char")
 		{
-			CharInfo charInfo{};
+			Fnt_Data charInfo{};
 			std::string token;
 			bool id_found = false;
 
@@ -179,7 +179,7 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 	}
 	file.close();
 
-	memcpy(m_pcbMappedFontInfo, tempCharInfos.data(), sizeof(CharInfo)* m_MAX_CHARS);
+	memcpy(m_pcbMappedFntInfo, tempCharInfos.data(), sizeof(Fnt_Data)* m_MAX_CHARS);
 	m_vCharInfos = std::move(tempCharInfos);
 
 	return true;
@@ -188,14 +188,12 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::string_view text, XMFLOAT2 position, XMFLOAT4 color, float fScale)
 {
 	if (!m_pTexture) return;
-	m_pcbMappedFontInfo->Scale = fScale;
-	m_pcbMappedFontInfo->FontColor = color;
 	UINT nOffset = 0;
 
 	for (char c : text)
 	{
 		if (c < 0 || c >= static_cast<char>(m_vCharInfos.size())) continue;
-		CharInfo& charInfo = m_vCharInfos[static_cast<size_t>(c)];
+		Fnt_Data& charInfo = m_vCharInfos[static_cast<size_t>(c)];
 		FONT_VERTEX* pCurrentVertex = m_pMappedFontVertices + nOffset;
 
 		pCurrentVertex->m_xmf2Position = position;

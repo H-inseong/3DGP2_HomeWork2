@@ -129,6 +129,6 @@ protected:
 	ID3D12PipelineState*		m_pd3dFontPipelineState = NULL;
 
 	ID3D12Resource*				m_pd3dcbFont = NULL;
-	CB_FONT_INFO*				m_pcbMappedFont = NULL;
+	FONT_INFO*					m_pcbMappedFont = NULL;
 };
 

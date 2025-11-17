@@ -614,7 +614,7 @@ void CGameFramework::BuildObjects()
 
 void CGameFramework::BuildFont()
 {
-	UINT ncbElementBytes = ((sizeof(CB_FONT_INFO) + 255) & ~255);
+	UINT ncbElementBytes = ((sizeof(FONT_INFO) + 255) & ~255);
 	m_pd3dcbFont = ::CreateBufferResource(m_pd3dDevice, m_pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 	m_pd3dcbFont->Map(0, NULL, (void**)&m_pcbMappedFont);
 
@@ -853,7 +853,11 @@ void CGameFramework::RenderUI()
 	d3dGpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize;
 	m_pd3dCommandList->SetGraphicsRootDescriptorTable(2, d3dGpuHandle); //CBFONTINFO
 
-	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(10.0f, 10.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 100.0f);
+	m_pcbMappedFont->ScreenSize = XMFLOAT2((float)m_nWndClientWidth, (float)m_nWndClientHeight);
+	m_pcbMappedFont->TextureSize = XMFLOAT2(512.0f, 512.0f);
+	m_pcbMappedFont->Scale = 1.0f;
+
+	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 100.0f);
 
 }
 

@@ -24,11 +24,9 @@ SamplerState gSampler : register(s0);
 
 cbuffer cbFontInfo : register(b0)
 {
-    float4 FontColor;
     float2 ScreenSize;
     float2 TextureSize;
     float Scale;
-    float2 StartPos;
 };
 
 struct CharInfo
@@ -80,14 +78,13 @@ void GS_Font(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> OutStream)
     //¿ìÇÏ´Ü
     positions[3] = pos + size;
     
-    float2 LeftTop = float2(charInfo.x, charInfo.y) / TextureSize;
-    float2 RightTop= float2(charInfo.x + charInfo.width, charInfo.y) / TextureSize;
-    float2 LeftBottom = float2(charInfo.x, charInfo.y + charInfo.height) / TextureSize;
-    float2 RightBottom = float2(charInfo.x + charInfo.width, charInfo.y + charInfo.height) / TextureSize;
+    float2 LeftTop =        float2(charInfo.x,                  charInfo.y) / TextureSize;
+    float2 RightTop=        float2(charInfo.x + charInfo.width, charInfo.y) / TextureSize;
+    float2 LeftBottom =     float2(charInfo.x,                  charInfo.y + charInfo.height) / TextureSize;
+    float2 RightBottom =    float2(charInfo.x + charInfo.width, charInfo.y + charInfo.height) / TextureSize;
     
     PS_INPUT Out;
-    Out.Color = FontColor;
-    
+    Out.Color = input[0].Color;
     
     Out.Position = ScreenToClip(positions[0], ScreenSize);
     Out.UV = LeftTop;

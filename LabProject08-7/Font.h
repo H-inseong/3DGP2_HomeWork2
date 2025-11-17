@@ -1,7 +1,7 @@
 #pragma once
 #include "Object.h"
 
-struct CharInfo {
+struct Fnt_Data {
 	int id;
 	int x, y;
 	int width, height;
@@ -18,13 +18,11 @@ struct FONT_VERTEX
 	UINT					m_nType;
 };
 
-struct CB_FONT_INFO
+struct FONT_INFO
 {
-	XMFLOAT4				FontColor;
 	XMFLOAT2				ScreenSize;
 	XMFLOAT2				TextureSize;
 	float 					Scale;
-	XMFLOAT2				StartPos;
 };
 
 class CSpriteFont {
@@ -49,9 +47,11 @@ public:
 		XMFLOAT4 color,
 		float fScale = 1.0f);
 
+	XMFLOAT2 GetTextureSize() const { return XMFLOAT2((float)m_nScaleW,(float)m_nScaleH); }
+
 private:
 	CTexture*				m_pTexture = nullptr;
-	std::vector<CharInfo>	m_vCharInfos;
+	std::vector<Fnt_Data>	m_vCharInfos;
 
 	int						m_nLineHeight = 0;
 	int						m_nBase = 0;
@@ -65,12 +65,12 @@ private:
 	ID3D12DescriptorHeap*	m_pd3dCbvSrvUavDescriptorHeap = nullptr;
 	UINT					m_nCbvSrvUavDescriptorIncrementSize = 0;
 
-	ID3D12Resource*			m_pd3dcbFontInfo = nullptr;
-	CB_FONT_INFO*			m_pcbMappedFontInfo = nullptr;
+	ID3D12Resource*			m_pd3dcbFntInfo = nullptr;
+	Fnt_Data*				m_pcbMappedFntInfo = nullptr;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE m_d3dFontSrvGpuDescriptorHandle;
 
-	ID3D12Resource*			m_pd3dFontVertexBuffer = nullptr;
-	FONT_VERTEX*			m_pMappedFontVertices = nullptr;
+	ID3D12Resource*				m_pd3dFontVertexBuffer = nullptr;
+	FONT_VERTEX*				m_pMappedFontVertices = nullptr;
 	D3D12_VERTEX_BUFFER_VIEW	m_d3dFontVertexBufferView;
 };
