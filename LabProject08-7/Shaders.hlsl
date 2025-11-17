@@ -1,33 +1,4 @@
-//#define _WITH_CONSTANT_BUFFER_SYNTAX
 
-#ifdef _WITH_CONSTANT_BUFFER_SYNTAX
-struct CB_PLAYER_INFO
-{
-	matrix		mtxWorld;
-}; 
-
-struct CB_GAMEOBJECT_INFO
-{
-	matrix		mtxWorld;
-};
-
-struct CB_CAMERA_INFO
-{
-	matrix		mtxView;
-	matrix		mtxProjection;
-};
-
-struct CB_FRAMEWORK_INFO
-{
-	float 		gfCurrentTime;
-	float		gfElapsedTime;
-};
-
-ConstantBuffer<CB_PLAYER_INFO> gcbPlayerObjectInfo : register(b0);
-ConstantBuffer<CB_CAMERA_INFO> gcbCameraInfo : register(b1);
-ConstantBuffer<CB_GAMEOBJECT_INFO> gcbGameObjectInfo : register(b2);
-ConstantBuffer<CB_FRAMEWORK_INFO> gcbFrameworkInfo : register(b3);
-#else
 cbuffer cbPlayerInfo : register(b0)
 {
 	matrix		gmtxPlayerWorld : packoffset(c0);

@@ -69,13 +69,10 @@ void GS_Font(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> OutStream)
     float2 pos = input[0].Position.xy + offset;
     
     float2 positions[4];
-    //좌상단
+
     positions[0] = pos;
-    //우상단
     positions[1] = float2(pos.x + size.x,   pos.y);
-    //좌하단
     positions[2] = float2(pos.x,   pos.y + size.y);
-    //우하단
     positions[3] = pos + size;
     
     float2 LeftTop =        float2(charInfo.x,                  charInfo.y) / TextureSize;
