@@ -19,24 +19,49 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	if (m_pTexture) { m_pTexture->AddRef(); }
 	m_vCharInfos.resize(MAX_CHARS);
 
-	D3D12_RESOURCE_DESC d3dResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(CB_FONT_INFO) * m_MAX_CHARS);
-	D3D12_HEAP_PROPERTIES d3dHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	D3D12_HEAP_PROPERTIES d3dHeapPropertiesDesc;
+	::ZeroMemory(&d3dHeapPropertiesDesc, sizeof(D3D12_HEAP_PROPERTIES));
+	d3dHeapPropertiesDesc.Type = D3D12_HEAP_TYPE_UPLOAD;
+	d3dHeapPropertiesDesc.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	d3dHeapPropertiesDesc.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	d3dHeapPropertiesDesc.CreationNodeMask = 1;
+	d3dHeapPropertiesDesc.VisibleNodeMask = 1;
+
+	D3D12_RESOURCE_DESC d3dResourceDesc;
+	::ZeroMemory(&d3dResourceDesc, sizeof(D3D12_RESOURCE_DESC));
+	d3dResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	d3dResourceDesc.Alignment = 0;
+	d3dResourceDesc.Width = sizeof(CB_FONT_INFO) * m_MAX_CHARS;
+	d3dResourceDesc.Height = 1;
+	d3dResourceDesc.DepthOrArraySize = 1;
+	d3dResourceDesc.MipLevels = 1;
+	d3dResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	d3dResourceDesc.SampleDesc.Count = 1;
+	d3dResourceDesc.SampleDesc.Quality = 0;
+	d3dResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	d3dResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
 	HRESULT hResult = m_pd3dDevice->CreateCommittedResource(
-		&d3dHeapProperties,
+		&d3dHeapPropertiesDesc,
 		D3D12_HEAP_FLAG_NONE,
 		&d3dResourceDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&m_pd3dcbFontInfo));
+		__uuidof(ID3D12Resource),
+		(void**)&m_pd3dcbFontInfo);
+
 	
-	m_pd3dcbFontInfo->Map(0, nullptr, reinterpret_cast<void**>(&m_pcbMappedFontInfo));
+	if (m_pd3dcbFontInfo) {
+		m_pd3dcbFontInfo->Map(0, nullptr, reinterpret_cast<void**>(&m_pcbMappedFontInfo));
+	} else {
+		// 에러 처리
+	}
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc{};
-	SrvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	SrvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	SrvDesc.Buffer.FirstElement = 0;
-	SrvDesc.Buffer.NumElements = MAX_CHARS;
+	SrvDesc.Buffer.NumElements = m_MAX_CHARS;
 	SrvDesc.Buffer.StructureByteStride = sizeof(CB_FONT_INFO);
 	SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
@@ -44,24 +69,27 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	D3D12_CPU_DESCRIPTOR_HANDLE SrvCpuHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	SrvCpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
 
+	HRESULT a = pd3dDevice->GetDeviceRemovedReason();
 	m_pd3dDevice->CreateShaderResourceView(m_pd3dcbFontInfo, &SrvDesc, SrvCpuHandle);
-	
+	a = pd3dDevice->GetDeviceRemovedReason();
 	m_d3dFontSrvGpuDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	m_d3dFontSrvGpuDescriptorHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
 
-	m_pd3dFontVertexBuffer = CreateBufferResource(
+	UINT ncbElementBytes = ((sizeof(FONT_VERTEX) + 255) & ~255);
+	m_pd3dFontVertexBuffer = ::CreateBufferResource(
 		m_pd3dDevice,
 		m_pd3dCommandList,
-		nullptr,
-		sizeof(FONT_VERTEX) * MAX_CHARS,
+		NULL,
+		ncbElementBytes,
 		D3D12_HEAP_TYPE_UPLOAD,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr);
-	m_pd3dFontVertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_pMappedFontVertices));
+		NULL);
+
+	m_pd3dFontVertexBuffer->Map(0, nullptr, (void**)(&m_pMappedFontVertices));
 
 	m_d3dFontVertexBufferView.BufferLocation = m_pd3dFontVertexBuffer->GetGPUVirtualAddress();
 	m_d3dFontVertexBufferView.StrideInBytes = sizeof(FONT_VERTEX);
-	m_d3dFontVertexBufferView.SizeInBytes = sizeof(FONT_VERTEX) * MAX_CHARS;
+	m_d3dFontVertexBufferView.SizeInBytes = sizeof(FONT_VERTEX) * m_MAX_CHARS;
 }
 
 CSpriteFont::~CSpriteFont()

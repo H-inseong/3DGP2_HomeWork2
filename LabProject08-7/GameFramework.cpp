@@ -618,9 +618,8 @@ void CGameFramework::BuildFont()
 	D3D12_CPU_DESCRIPTOR_HANDLE d3dSrvCPUDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	CTexture* pFontTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
-	pFontTexture->LoadTextureFromFile(m_pd3dDevice, m_pd3dCommandList, L"Font/D2coding_0.dds", 0);
+	pFontTexture->LoadTextureFromFile(m_pd3dDevice, m_pd3dCommandList, L"Font/D2coding_0.dds", RESOURCE_TEXTURE2D, 0);
 	pFontTexture->CreateShaderResourceView(m_pd3dDevice, d3dSrvCPUDescriptorHandle, 0);
-
 	m_pSpriteFont = new CSpriteFont(m_pd3dDevice, m_pd3dCommandList,
 		pFontTexture, 128,
 		m_pd3dCbvSrvUavDescriptorHeap,
