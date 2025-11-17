@@ -75,12 +75,12 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	m_d3dFontSrvGpuDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	m_d3dFontSrvGpuDescriptorHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
 
-	UINT ncbElementBytes = ((sizeof(FONT_VERTEX) + 255) & ~255);
+	UINT nBufferSize = sizeof(FONT_VERTEX) * m_MAX_CHARS;
 	m_pd3dFontVertexBuffer = ::CreateBufferResource(
 		m_pd3dDevice,
 		m_pd3dCommandList,
 		NULL,
-		ncbElementBytes,
+		nBufferSize,
 		D3D12_HEAP_TYPE_UPLOAD,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		NULL);

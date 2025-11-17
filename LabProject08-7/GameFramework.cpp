@@ -242,7 +242,7 @@ void CGameFramework::CreateCbvSrvUavDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC d3dDescriptorHeapDesc;
 	::ZeroMemory(&d3dDescriptorHeapDesc, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
-	d3dDescriptorHeapDesc.NumDescriptors = 2;
+	d3dDescriptorHeapDesc.NumDescriptors = 3;
 	d3dDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	d3dDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	d3dDescriptorHeapDesc.NodeMask = 0;
@@ -581,18 +581,21 @@ void CGameFramework::BuildObjects()
 	m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
 	BuildFont();
-	m_nScenes = 3;
-	m_vScenes.push_back(new CStartScene());
-	m_vScenes.push_back(new CGameScene());
-	m_vScenes.push_back(new CMenuScene());
+	//m_nScenes = 3;
+	//m_vScenes.push_back(new CStartScene());
+	//m_vScenes.push_back(new CScene());
+	//m_vScenes.push_back(new CMenuScene());
 
-	for (const auto& scene : m_vScenes)
-	{
-		scene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
-		scene->m_pSpriteFont = m_pSpriteFont;
-	}
+	//for (const auto& scene : m_vScenes)
+	//{
+	//	scene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+	//	scene->m_pSpriteFont = m_pSpriteFont;
+	//}
 
-	m_pScene = m_vScenes[0]; //시작 메뉴로 설정
+	//m_pScene = m_vScenes[1]; //시작 메뉴로 설정
+	m_pScene = new CScene();
+	m_pScene->m_pSpriteFont = m_pSpriteFont;
+	m_pScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 	m_pPlayer = new CTerrainPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), m_pScene->GetTerrain(), 1);
 	m_pCamera = m_pPlayer->GetCamera();
 
@@ -620,6 +623,16 @@ void CGameFramework::BuildFont()
 	CTexture* pFontTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pFontTexture->LoadTextureFromFile(m_pd3dDevice, m_pd3dCommandList, L"Font/D2coding_0.dds", RESOURCE_TEXTURE2D, 0);
 	pFontTexture->CreateShaderResourceView(m_pd3dDevice, d3dSrvCPUDescriptorHandle, 0);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC d3dCbvDesc;
+	d3dCbvDesc.BufferLocation = m_pd3dcbFont->GetGPUVirtualAddress();
+	d3dCbvDesc.SizeInBytes = ncbElementBytes;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE d3dCbvCPUDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	d3dCbvCPUDescriptorHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 2;
+
+	m_pd3dDevice->CreateConstantBufferView(&d3dCbvDesc, d3dCbvCPUDescriptorHandle);
+
 	m_pSpriteFont = new CSpriteFont(m_pd3dDevice, m_pd3dCommandList,
 		pFontTexture, 128,
 		m_pd3dCbvSrvUavDescriptorHeap,
@@ -833,7 +846,14 @@ void CGameFramework::RenderUI()
 
 	m_pd3dCommandList->SetPipelineState(m_pd3dFontPipelineState);
 	m_pd3dCommandList->SetGraphicsRootSignature(m_pd3dFontRootSignature);
-	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(10.0f, 10.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 1.0f);
+	D3D12_GPU_DESCRIPTOR_HANDLE d3dGpuHandle = m_pd3dCbvSrvUavDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	m_pd3dCommandList->SetGraphicsRootDescriptorTable(0, d3dGpuHandle); //폰트 텍스쳐
+	d3dGpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize;
+	m_pd3dCommandList->SetGraphicsRootDescriptorTable(1, d3dGpuHandle); //폰트 정보
+	d3dGpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize;
+	m_pd3dCommandList->SetGraphicsRootDescriptorTable(2, d3dGpuHandle); //CBFONTINFO
+
+	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(10.0f, 10.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 100.0f);
 
 }
 
