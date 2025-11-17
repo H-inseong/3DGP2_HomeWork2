@@ -217,3 +217,15 @@ public:
 	virtual float OnGetHeight(int x, int z, void* pContext);
 	virtual XMFLOAT4 OnGetColor(int x, int z, void* pContext);
 };
+
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CBillboardPointListMesh : public CMesh
+{
+public:
+	CBillboardPointListMesh(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const std::vector<XMFLOAT3>& points);
+	virtual ~CBillboardPointListMesh();
+
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet);
+
+}
