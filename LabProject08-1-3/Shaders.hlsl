@@ -6,6 +6,12 @@ struct MATERIAL
 	float4					m_cEmissive;
 };
 
+cbuffer cbFrameworkInfo : register(b0)
+{
+    float gfCurrentTime;
+    float gfElapsedTime;
+};
+
 cbuffer cbCameraInfo : register(b1)
 {
 	matrix					gmtxView : packoffset(c0);
@@ -187,9 +193,9 @@ float4 PSTextured(VS_SPRITE_TEXTURED_OUTPUT input, uint nPrimitiveID : SV_Primit
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-Texture2D gtxtTerrainTexture : register(t14);
-Texture2D gtxtDetailTexture : register(t15);
-Texture2D gtxtAlphaTexture : register(t16);
+Texture2D gtxtTerrainTexture	: register(t14);
+Texture2D gtxtDetailTexture		: register(t15);
+Texture2D gtxtAlphaTexture		: register(t16);
 
 float4 PSTextured(VS_SPRITE_TEXTURED_OUTPUT input) : SV_TARGET
 {
@@ -311,4 +317,32 @@ float4 PS_Billboard(PS_INPUT input) : SV_TARGET
 	clip(cColor.a - 0.1f);
 	
     return cColor;
+}
+
+////////////////////////////////////////////////////////////
+Texture2D g_UITexture : register(t1);
+
+struct VS_UI_INPUT
+{
+	float3 position : POSITION;
+    float2 uv : TEXCOORD;
+};
+
+struct VS_UI_OUTPUT
+{
+	float4 position : SV_POSITION;
+	float2 uv : TEXCOORD;
+};
+
+VS_UI_OUTPUT VSUI(VS_UI_INPUT input)
+{
+	VS_UI_OUTPUT output;
+	output.position = float4(input.position.xy, 0.0f, 1.0f);
+	output.uv = input.uv;
+	return(output);
+}
+
+float4 PSUI(VS_UI_OUTPUT input) : SV_TARGET
+{
+    return g_UITexture.Sample(gssWrap, input.uv);
 }
