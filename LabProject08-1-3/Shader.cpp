@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "Shader.h"
+#include <random>
 
 struct BillboardVertex
 {
@@ -367,15 +368,16 @@ CObjectsShader::~CObjectsShader()
 
 float Random(float fMin, float fMax)
 {
-	float fRandomValue = (float)rand();
-	if (fRandomValue < fMin) fRandomValue = fMin;
-	if (fRandomValue > fMax) fRandomValue = fMax;
-	return(fRandomValue);
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dist(fMin, fMax);
+
+	return dist(gen);
 }
 
 float Random()
 {
-	return(rand() / float(RAND_MAX));
+	return Random(0.0f, 1.0f);
 }
 
 XMFLOAT3 RandomPositionInSphere(XMFLOAT3 xmf3Center, float fRadius, int nColumn, int nColumnSpace)
@@ -397,56 +399,34 @@ void CObjectsShader::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsComman
 	CGameObject *pSuperCobraModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/SuperCobra.bin", this);
 	CGameObject* pGunshipModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Gunship.bin", this);
 
-	int nColumnSpace = 5, nColumnSize = 30;           
-    int nFirstPassColumnSize = (m_nObjects % nColumnSize) > 0 ? (nColumnSize - 1) : nColumnSize;
+	float fRangeMin = 500.0f;
+	float fRangeMax = 4000.0f;
+	float fHeightMin = 750.0f;
+	float fHeightMax = 1100.0f;
 
-	int nObjects = 0;
-    for (int h = 0; h < nFirstPassColumnSize; h++)
-    {
-        for (int i = 0; i < floor(float(m_nObjects) / float(nColumnSize)); i++)
-        {
-			if (nObjects % 2)
-			{
-				m_ppObjects[nObjects] = new CSuperCobraObject(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-				m_ppObjects[nObjects]->SetChild(pSuperCobraModel);
-				pSuperCobraModel->AddRef();
-			}
-			else
-			{
-				m_ppObjects[nObjects] = new CGunshipObject(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-				m_ppObjects[nObjects]->SetChild(pGunshipModel);
-				pGunshipModel->AddRef();
-			}
-			XMFLOAT3 xmf3RandomPosition = RandomPositionInSphere(XMFLOAT3(920.0f, 0.0f, 1200.0f), Random(20.0f, 150.0f), h - int(floor(nColumnSize / 2.0f)), nColumnSpace);
-			m_ppObjects[nObjects]->SetPosition(xmf3RandomPosition.x, xmf3RandomPosition.y + 750.0f, xmf3RandomPosition.z);
-			m_ppObjects[nObjects]->Rotate(0.0f, 90.0f, 0.0f);
-			m_ppObjects[nObjects++]->PrepareAnimate();
+	for (int i = 0; i < m_nObjects; i++)
+	{
+
+		if (i % 2 == 0)
+		{
+			m_ppObjects[i] = new CSuperCobraObject(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+			m_ppObjects[i]->SetChild(pSuperCobraModel);
+			pSuperCobraModel->AddRef();
 		}
-    }
+		else
+		{
+			m_ppObjects[i] = new CGunshipObject(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+			m_ppObjects[i]->SetChild(pGunshipModel);
+			pGunshipModel->AddRef();
+			float fRandomX = Random(fRangeMin, fRangeMax);
+			float fRandomZ = Random(fRangeMin, fRangeMax);
+			float fRandomY = Random(fHeightMin, fHeightMax);
 
-    if (nFirstPassColumnSize != nColumnSize)
-    {
-        for (int i = 0; i < m_nObjects - int(floor(float(m_nObjects) / float(nColumnSize)) * nFirstPassColumnSize); i++)
-        {
-			if (nObjects % 2)
-			{
-				m_ppObjects[nObjects] = new CSuperCobraObject(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-				m_ppObjects[nObjects]->SetChild(pSuperCobraModel);
-				pSuperCobraModel->AddRef();
-			}
-			else
-			{
-				m_ppObjects[nObjects] = new CGunshipObject(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-				m_ppObjects[nObjects]->SetChild(pGunshipModel);
-				pGunshipModel->AddRef();
-			}
-			XMFLOAT3 xmf3RandomPosition = RandomPositionInSphere(XMFLOAT3(920.0f, 0.0f, 1200.0f), Random(20.0f, 150.0f), nColumnSize - int(floor(nColumnSize / 2.0f)), nColumnSpace);
-			m_ppObjects[nObjects]->SetPosition(xmf3RandomPosition.x, xmf3RandomPosition.y + 850.0f, xmf3RandomPosition.z);
-			m_ppObjects[nObjects]->Rotate(0.0f, 90.0f, 0.0f);
-			m_ppObjects[nObjects++]->PrepareAnimate();
-        }
-    }
-
+			m_ppObjects[i]->SetPosition(fRandomX, fRandomY, fRandomZ);
+			m_ppObjects[i]->Rotate(0.0f, Random(0.0f, 360.0f), 0.0f);
+			m_ppObjects[i]->PrepareAnimate();
+		}
+	}
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
@@ -599,7 +579,7 @@ D3D12_INPUT_LAYOUT_DESC CBillboardShader::CreateInputLayout()
 {
 	UINT nInputElementDescs = 2;
 	D3D12_INPUT_ELEMENT_DESC* pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
-	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	pd3dInputElementDescs[1] = { "TYPE", 0, DXGI_FORMAT_R32_UINT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
 	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
@@ -696,6 +676,7 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 				}
 				if (nType != -1)
 				{
+					a[nType]++;
 					float fHeight = pTerrain->GetHeight(x * xmf3Scale.x, z * xmf3Scale.z);
 					vBillboardVertices.push_back(BillboardVertex{ XMFLOAT3(x * xmf3Scale.x, fHeight + pBillboardSizes[nType].y / 2, z * xmf3Scale.z), (UINT)nType });
 				}
@@ -770,7 +751,26 @@ void CBillboardShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 {
 	m_nPipelineStates = 1;
 	m_ppd3dPipelineStates = new ID3D12PipelineState * [m_nPipelineStates];
-	CShader::CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+	::ZeroMemory(&m_d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+
+	m_d3dPipelineStateDesc.pRootSignature = pd3dGraphicsRootSignature;
+	m_d3dPipelineStateDesc.VS = CreateVertexShader();
+	m_d3dPipelineStateDesc.PS = CreatePixelShader();
+	m_d3dPipelineStateDesc.GS = CreateGeometryShader(); // geometry shader add
+	m_d3dPipelineStateDesc.RasterizerState = CreateRasterizerState();
+	m_d3dPipelineStateDesc.BlendState = CreateBlendState();
+	m_d3dPipelineStateDesc.DepthStencilState = CreateDepthStencilState();
+	m_d3dPipelineStateDesc.InputLayout = CreateInputLayout();
+	m_d3dPipelineStateDesc.SampleMask = UINT_MAX;
+	m_d3dPipelineStateDesc.PrimitiveTopologyType = GetPrimitiveTopologyType();
+	m_d3dPipelineStateDesc.NumRenderTargets = 1;
+	m_d3dPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	m_d3dPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	m_d3dPipelineStateDesc.SampleDesc.Count = 1;
+	m_d3dPipelineStateDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+
+	HRESULT hResult = pd3dDevice->CreateGraphicsPipelineState(&m_d3dPipelineStateDesc, __uuidof(ID3D12PipelineState), (void**)&m_ppd3dPipelineStates[0]);
+
 	if (m_pd3dVertexShaderBlob) m_pd3dVertexShaderBlob->Release();
 	if (m_pd3dGeometryShaderBlob) m_pd3dGeometryShaderBlob->Release();
 	if (m_pd3dPixelShaderBlob) m_pd3dPixelShaderBlob->Release();

@@ -252,6 +252,11 @@ cbuffer cbBillboardInfo : register(b5)
 };
 Texture2D gBillboardTextures[7] : register(t17);
 
+struct VS_INPUT
+{
+    float3 position : POSITION;
+    uint	typeID : TYPE;
+};
 
 struct GS_INPUT
 {
@@ -267,11 +272,11 @@ struct PS_INPUT
 };
 
 
-GS_INPUT VS_Billboard(float4 input : POSITION)
+GS_INPUT VS_Billboard(VS_INPUT input)
 {
 	GS_INPUT output;
-    output.position = float4(input.xyz, 1.0f); // 받아온 행렬이 월드 행렬이므로 월드 좌표계 위치를 그대로 넘겨줌
-    output.typeID = input.w;
+    output.position = float4(input.position, 1.0f); // 받아온 행렬이 월드 행렬이므로 월드 좌표계 위치를 그대로 넘겨줌
+    output.typeID = input.typeID;
 	return output;
 }
 
@@ -322,7 +327,7 @@ Texture2D g_InterfaceTexture : register(t24);
 
 struct VS_INTERFACE_INPUT
 {
-	float3 position : POSITION;
+    float3 position : POSITION;
     float2 uv : TEXCOORD;
 };
 

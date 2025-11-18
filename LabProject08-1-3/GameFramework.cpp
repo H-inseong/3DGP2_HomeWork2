@@ -616,9 +616,9 @@ void CGameFramework::BuildObjects()
 
 	m_vScenes.push_back(new CScene());
 	m_vScenes.push_back(new CStartScene());
-	m_vScenes[0]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+	//m_vScenes[0]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 
-	m_pScene = m_vScenes[1];
+	m_pScene = m_vScenes[0];
 	if (m_pScene) m_pScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 
 	CAirplanePlayer *pAirplanePlayer = new CAirplanePlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature());
@@ -762,7 +762,7 @@ void CGameFramework::FrameAdvance()
 #ifdef _WITH_PLAYER_TOP
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 #endif
-	if (m_pPlayer && (m_eGameState == EGameState::InGame)) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
+	if (m_pPlayer/* && (m_eGameState == EGameState::InGame)*/) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 	RenderUI();
 
