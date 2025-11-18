@@ -347,5 +347,6 @@ VS_INTERFACE_OUTPUT VS_Interface(VS_INTERFACE_INPUT input)
 
 float4 PS_Interface(VS_INTERFACE_OUTPUT input) : SV_TARGET
 {
-    return g_InterfaceTexture.Sample(gssWrap, input.uv);
+    float4 cColor = g_InterfaceTexture.Sample(gssWrap, input.uv);
+    return (cColor);
 }
