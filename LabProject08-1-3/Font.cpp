@@ -69,9 +69,7 @@ CSpriteFont::CSpriteFont(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	D3D12_CPU_DESCRIPTOR_HANDLE SrvCpuHandle = m_pd3dCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	SrvCpuHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
 
-	HRESULT a = pd3dDevice->GetDeviceRemovedReason();
 	m_pd3dDevice->CreateShaderResourceView(m_pd3dcbFntInfo, &SrvDesc, SrvCpuHandle);
-	a = pd3dDevice->GetDeviceRemovedReason();
 	m_d3dFontSrvGpuDescriptorHandle = m_pd3dCbvSrvUavDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	m_d3dFontSrvGpuDescriptorHandle.ptr += m_nCbvSrvUavDescriptorIncrementSize * 1;
 
