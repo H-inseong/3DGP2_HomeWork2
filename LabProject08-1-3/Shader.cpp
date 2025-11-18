@@ -695,7 +695,7 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 				if (nType != -1)
 				{
 					float fHeight = pTerrain->GetHeight(x * xmf3Scale.x, z * xmf3Scale.z);
-					vBillboardVertices.push_back(XMFLOAT4(x * xmf3Scale.x, fHeight + pBillboardSizes[nType].y, z * xmf3Scale.z, (float)nType));
+					vBillboardVertices.push_back(XMFLOAT4(x * xmf3Scale.x, fHeight + pBillboardSizes[nType].y, z * xmf3Scale.z, nType));
 				}
 			}
 		}
