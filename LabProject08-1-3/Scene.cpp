@@ -533,7 +533,39 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->UpdateTransform(NULL);
 
 	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->AnimateObjects(fTimeElapsed);
-	
+
+	if (m_pPlayer && m_pTerrain)
+	{
+		XMFLOAT3 xmf3PlayerPos = m_pPlayer->GetPosition();
+
+
+		float fMargin = 5.0f;
+		float fMinX = fMargin;
+		float fMinZ = fMargin;
+		float fMaxX = m_pTerrain->GetWidth() - fMargin;
+		float fMaxZ = m_pTerrain->GetLength() - fMargin;
+
+		// X축 가두기
+		if (xmf3PlayerPos.x < fMinX) xmf3PlayerPos.x = fMinX;
+		if (xmf3PlayerPos.x > fMaxX) xmf3PlayerPos.x = fMaxX;
+
+		// Z축 가두기
+		if (xmf3PlayerPos.z < fMinZ) xmf3PlayerPos.z = fMinZ;
+		if (xmf3PlayerPos.z > fMaxZ) xmf3PlayerPos.z = fMaxZ;
+
+
+		// (3) 높이(Y축) 충돌 처리 (범위 제한된 X, Z 좌표 사용)
+		float fTerrainHeight = m_pTerrain->GetHeight(xmf3PlayerPos.x, xmf3PlayerPos.z);
+		float fPlayerOffset = 5.0f;
+
+		if (xmf3PlayerPos.y <= (fTerrainHeight + fPlayerOffset))
+		{
+			xmf3PlayerPos.y = fTerrainHeight + fPlayerOffset;
+		}
+
+		// (4) 최종 보정된 위치 적용
+		m_pPlayer->SetPosition(xmf3PlayerPos);
+	}
 	if (m_pLights)
 	{
 		m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
