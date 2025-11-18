@@ -373,13 +373,11 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 			if (nAction == SCENE_ACTION_START)
 			{
 				m_pScene = m_vScenes[0];
-
 				m_eGameState = EGameState::InGame;
 
 				if (m_pPlayer)
 				{
 					m_pPlayer->SetPosition(XMFLOAT3(920.0f, 745.0f, 1270.0f));
-
 				}
 			}
 			else if (nAction == SCENE_ACTION_QUIT)
@@ -649,6 +647,8 @@ void CGameFramework::BuildObjects()
 	CAirplanePlayer *pAirplanePlayer = new CAirplanePlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature());
 	
 	m_pScene->m_pPlayer = m_pPlayer = pAirplanePlayer;
+	m_vScenes[0]->m_pPlayer = m_pPlayer;
+
 	m_pCamera = m_pPlayer->GetCamera();
 
 	m_pd3dCommandList->Close();
