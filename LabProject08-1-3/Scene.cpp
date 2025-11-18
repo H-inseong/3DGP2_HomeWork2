@@ -566,6 +566,16 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		// (4) 최종 보정된 위치 적용
 		m_pPlayer->SetPosition(xmf3PlayerPos);
 	}
+	if (m_pPlayer && m_pPlayer->IsActive())
+	{
+		CObjectsShader* pHelicopterShader = dynamic_cast<CObjectsShader*>(m_ppShaders[0]);
+
+		if (pHelicopterShader)
+		{
+			pHelicopterShader->CheckObjectCollisions(m_pPlayer);
+		}
+	}
+
 	if (m_pLights)
 	{
 		m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();

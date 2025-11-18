@@ -234,6 +234,13 @@ public:
 	static CGameObject *LoadGeometryFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, char *pstrFileName, CShader *pShader);
 
 	static void PrintFrameInfo(CGameObject *pGameObject, CGameObject *pParent);
+
+	BoundingBox m_xmOOBB;
+	void UpdateBoundingBox();
+
+	bool m_bActive = true;
+	bool IsActive() const { return m_bActive; }
+	void SetActive(bool bActive) { m_bActive = bActive; }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

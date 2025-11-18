@@ -283,34 +283,49 @@ GS_INPUT VS_Billboard(VS_INPUT input)
 [maxvertexcount(4)]
 void GS_Billboard(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> outputStream)
 {
-    float3 camRight = float3(gmtxView._11, gmtxView._21, gmtxView._31);
-	float3 camUp	= float3(gmtxView._12, gmtxView._22, gmtxView._32);
-	
-	float3 billboardCenter = input[0].position;
-    float halfWidth = gBillboardSize[input[0].typeID].x * 0.5f;
-    float halfHeight = gBillboardSize[input[0].typeID].y * 0.5f;
-	
 	matrix gmtxViewProjection = mul(gmtxView, gmtxProjection);
-	PS_INPUT vertex;
-    vertex.typeID = input[0].typeID;
+    float4 centerPos = mul(float4(input[0].position), gmtxViewProjection);
+    float fRadius = gBillboardSize[input[0].typeID].x * 0.8f;
+
+    bool bVisible = true;
+    
+    // x축 검사 (좌우)
+    if (centerPos.x < -centerPos.w - fRadius || centerPos.x > centerPos.w + fRadius) bVisible = false;
+    // y축 검사 (상하)
+    if (centerPos.y < -centerPos.w - fRadius || centerPos.y > centerPos.w + fRadius) bVisible = false;
+    // z축 검사 (앞뒤 - near/far)
+    if (centerPos.z < -fRadius || centerPos.z > centerPos.w + fRadius) bVisible = false;
+
 	
-	vertex.position = mul(float4(billboardCenter - camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
-	vertex.uv = float2(0.0f, 1.0f);
-	outputStream.Append(vertex);
+    if (bVisible)
+    {
+        float3 camRight = float3(gmtxView._11, gmtxView._21, gmtxView._31);
+        float3 camUp = float3(gmtxView._12, gmtxView._22, gmtxView._32);
+	
+        float3 billboardCenter = input[0].position;
+        float halfWidth = gBillboardSize[input[0].typeID].x * 0.5f;
+        float halfHeight = gBillboardSize[input[0].typeID].y * 0.5f;
+		
+        PS_INPUT vertex;
+        vertex.typeID = input[0].typeID;
+	
+        vertex.position = mul(float4(billboardCenter - camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
+        vertex.uv = float2(0.0f, 1.0f);
+        outputStream.Append(vertex);
 
-	vertex.position = mul(float4(billboardCenter - camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
-	vertex.uv = float2(0.0f, 0.0f);
-	outputStream.Append(vertex);
+        vertex.position = mul(float4(billboardCenter - camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
+        vertex.uv = float2(0.0f, 0.0f);
+        outputStream.Append(vertex);
 
-	vertex.position = mul(float4(billboardCenter + camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
-	vertex.uv = float2(1.0f, 1.0f);
-	outputStream.Append(vertex);
+        vertex.position = mul(float4(billboardCenter + camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
+        vertex.uv = float2(1.0f, 1.0f);
+        outputStream.Append(vertex);
 
-	vertex.position = mul(float4(billboardCenter + camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
-	vertex.uv = float2(1.0f, 0.0f);
-	outputStream.Append(vertex);
-    outputStream.RestartStrip();
-
+        vertex.position = mul(float4(billboardCenter + camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
+        vertex.uv = float2(1.0f, 0.0f);
+        outputStream.Append(vertex);
+        outputStream.RestartStrip();
+    }
 };
 
 float4 PS_Billboard(PS_INPUT input) : SV_TARGET

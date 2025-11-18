@@ -418,6 +418,8 @@ CGameObject *CGameObject::FindFrame(char *pstrFrameName)
 
 void CGameObject::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
+	if (!m_bActive) return;
+
 	OnPrepareRender();
 
 	UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
@@ -504,6 +506,7 @@ void CGameObject::UpdateTransform(XMFLOAT4X4 *pxmf4x4Parent)
 
 	if (m_pSibling) m_pSibling->UpdateTransform(pxmf4x4Parent);
 	if (m_pChild) m_pChild->UpdateTransform(&m_xmf4x4World);
+	UpdateBoundingBox();
 }
 
 void CGameObject::SetPosition(float x, float y, float z)
@@ -815,6 +818,37 @@ void CGameObject::PrintFrameInfo(CGameObject *pGameObject, CGameObject *pParent)
 
 	if (pGameObject->m_pSibling) CGameObject::PrintFrameInfo(pGameObject->m_pSibling, pParent);
 	if (pGameObject->m_pChild) CGameObject::PrintFrameInfo(pGameObject->m_pChild, pGameObject);
+}
+
+void CGameObject::UpdateBoundingBox()
+{
+	if (m_ppMeshes && m_ppMeshes[0])
+	{
+		BoundingBox localBox = m_ppMeshes[0]->m_xmBoundingBox;
+		localBox.Transform(m_xmOOBB, XMLoadFloat4x4(&m_xmf4x4World));
+	}
+	else
+	{
+		m_xmOOBB.Center = XMFLOAT3(m_xmf4x4World._41, m_xmf4x4World._42, m_xmf4x4World._43);
+		m_xmOOBB.Extents = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+
+	CGameObject* pChild = m_pChild;
+	while (pChild)
+	{
+		if (pChild->m_xmOOBB.Extents.x > 0.0f)
+		{
+			if (m_xmOOBB.Extents.x == 0.0f)
+			{
+				m_xmOOBB = pChild->m_xmOOBB;
+			}
+			else
+			{
+				BoundingBox::CreateMerged(m_xmOOBB, m_xmOOBB, pChild->m_xmOOBB);
+			}
+		}
+		pChild = pChild->m_pSibling;
+	}
 }
 
 CGameObject *CGameObject::LoadGeometryFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, char *pstrFileName, CShader* pShader)

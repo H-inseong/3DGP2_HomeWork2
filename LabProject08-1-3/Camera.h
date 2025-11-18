@@ -100,6 +100,10 @@ public:
 	virtual void Rotate(float fPitch = 0.0f, float fYaw = 0.0f, float fRoll = 0.0f) { }
 	virtual void Update(XMFLOAT3& xmf3LookAt, float fTimeElapsed) { }
 	virtual void SetLookAt(XMFLOAT3& xmf3LookAt) { }
+
+	BoundingFrustum m_xmFrustumView;  // 뷰 공간 절두체
+	BoundingFrustum m_xmFrustumWorld; // 월드 공간 절두체 (최종)
+	void UpdateFrustum();
 };
 
 class CSpaceShipCamera : public CCamera

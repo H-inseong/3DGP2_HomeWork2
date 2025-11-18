@@ -104,6 +104,8 @@ void CCamera::RegenerateViewMatrix()
 	m_xmf4x4View._41 = -Vector3::DotProduct(m_xmf3Position, m_xmf3Right);
 	m_xmf4x4View._42 = -Vector3::DotProduct(m_xmf3Position, m_xmf3Up);
 	m_xmf4x4View._43 = -Vector3::DotProduct(m_xmf3Position, m_xmf3Look);
+
+	UpdateFrustum();
 }
 
 void CCamera::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
@@ -143,6 +145,13 @@ void CCamera::SetViewportsAndScissorRects(ID3D12GraphicsCommandList *pd3dCommand
 {
 	pd3dCommandList->RSSetViewports(1, &m_d3dViewport);
 	pd3dCommandList->RSSetScissorRects(1, &m_d3dScissorRect);
+}
+
+void CCamera::UpdateFrustum()
+{
+	BoundingFrustum::CreateFromMatrix(m_xmFrustumView, XMLoadFloat4x4(&m_xmf4x4Projection));
+	XMMATRIX xmmtxInvView = XMMatrixInverse(NULL, XMLoadFloat4x4(&m_xmf4x4View));
+	m_xmFrustumView.Transform(m_xmFrustumWorld, xmmtxInvView);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -111,10 +111,12 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, int nPipelineState=0);
 
 	int GetNumberOfObjects() { return(m_nObjects); }
-
+	int GetNumberOfDeathObjects() { return(m_nDeathObjects); }
+	void CheckObjectCollisions(CGameObject* pTargetObject);
 protected:
 	CGameObject						**m_ppObjects = 0;
 	int								m_nObjects = 0;
+	int								m_nDeathObjects = 0;
 
 	float							m_fxPitch = 0;
 	float							m_fyPitch = 0;
@@ -156,6 +158,12 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct BillboardChunk
+{
+	BoundingBox m_AABB;
+	UINT m_nVertexStart;
+	UINT m_nVertexCount;
+};
 
 class CBillboardShader : public CShader
 {

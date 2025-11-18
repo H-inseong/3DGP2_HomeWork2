@@ -449,7 +449,31 @@ void CObjectsShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera 
 		{
 			m_ppObjects[j]->Animate(0.16f);
 			m_ppObjects[j]->UpdateTransform(NULL);
-			m_ppObjects[j]->Render(pd3dCommandList, pCamera);
+			if (pCamera->m_xmFrustumWorld.Intersects(m_ppObjects[j]->m_xmOOBB))
+			{
+				m_ppObjects[j]->Render(pd3dCommandList, pCamera);
+			}
+		}
+	}
+}
+
+void CObjectsShader::CheckObjectCollisions(CGameObject* Player)
+{
+	if (!Player || !Player->IsActive()) return;
+
+	BoundingBox targetBox = Player->m_xmOOBB;
+
+	for (int i = 0; i < m_nObjects; i++)
+	{
+		// 객체가 존재하고, 살아있을 때만 검사
+		if (m_ppObjects[i] && m_ppObjects[i]->IsActive())
+		{
+			if (m_ppObjects[i]->m_xmOOBB.Intersects(targetBox))
+			{
+				// 적 헬기를 죽임 (사라지게 함)
+				m_ppObjects[i]->SetActive(false);
+				++m_nDeathObjects;
+			}
 		}
 	}
 }
@@ -851,7 +875,7 @@ D3D12_RASTERIZER_DESC CInterfaceShader::CreateRasterizerState()
 	::ZeroMemory(&d3dRasterizerDesc, sizeof(D3D12_RASTERIZER_DESC));
 
 	d3dRasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-	d3dRasterizerDesc.CullMode = D3D12_CULL_MODE_NONE; // [중요] 컬링을 끕니다 (양면 모두 그림)
+	d3dRasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 	d3dRasterizerDesc.FrontCounterClockwise = FALSE;
 	d3dRasterizerDesc.DepthBias = 0;
 	d3dRasterizerDesc.DepthBiasClamp = 0.0f;
