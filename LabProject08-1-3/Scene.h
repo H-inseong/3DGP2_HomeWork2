@@ -114,6 +114,15 @@ public:
 	LIGHTS								*m_pcbMappedLights = NULL;
 
 	std::vector<TextInfo>				m_vTextInfos;
+	void AddTextInfo(std::string_view text, XMFLOAT2 position, XMFLOAT4 color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), float fScale = 1.0f)
+	{
+		TextInfo textInfo;
+		textInfo.text = text;
+		textInfo.position = position;
+		textInfo.color = color;
+		textInfo.fScale = fScale;
+		m_vTextInfos.push_back(textInfo);
+	};
 
 public:
 	static CDescriptorHeap*				m_pDescriptorHeap;
@@ -134,4 +143,19 @@ public:
 	static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUCbvDescriptorNextHandle() { return(m_pDescriptorHeap->m_d3dCbvGPUDescriptorNextHandle); }
 	static D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSrvDescriptorStartHandle() { return(m_pDescriptorHeap->m_d3dSrvCPUDescriptorStartHandle); }
 	static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSrvDescriptorStartHandle() { return(m_pDescriptorHeap->m_d3dSrvGPUDescriptorStartHandle); }
+};
+
+class CStartScene : public CScene
+{
+	public:
+	CStartScene();
+	~CStartScene();
+	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList) override;
+	virtual void ReleaseObjects() override;
+
+	virtual bool ProcessInput(UCHAR* pKeysBuffer) override;
+	virtual void AnimateObjects(float fTimeElapsed) override;
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL) override;
+
+	CGameObject*			m_pBackground;
 };

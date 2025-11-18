@@ -27,7 +27,7 @@ struct FONT_INFO
 
 struct TextInfo
 {
-	std::string				text;
+	std::string_view		text;
 	XMFLOAT2				position;
 	XMFLOAT4				color;
 	float					fScale;

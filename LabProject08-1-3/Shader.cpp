@@ -360,10 +360,8 @@ CObjectsShader::~CObjectsShader()
 
 float Random(float fMin, float fMax)
 {
-	static std::random_device rd;  // 난수 생성기 시드(Seed)
-	static std::mt19937 gen(rd()); // 메르센 트위스터 엔진 (고품질 난수)
-
-	// fMin과 fMax 사이의 균등한 실수 분포 정의
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
 	std::uniform_real_distribution<float> dist(fMin, fMax);
 
 	return dist(gen);

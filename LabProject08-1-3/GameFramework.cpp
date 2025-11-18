@@ -429,7 +429,7 @@ void CGameFramework::RenderUI()
 	m_pcbMappedFont->ScreenSize = XMFLOAT2((float)m_nWndClientWidth, (float)m_nWndClientHeight);
 	m_pcbMappedFont->TextureSize = XMFLOAT2(512.0f, 512.0f);
 
-	for (TextInfo text : m_pScene->m_vTextInfos) {
+	for (const TextInfo text : m_pScene->m_vTextInfos) {
 		m_pcbMappedFont->Scale = text.fScale;
 
 		m_pSpriteFont->DrawString(m_pd3dCommandList, text.text, text.position, text.color, text.fScale);
@@ -612,11 +612,15 @@ void CGameFramework::BuildObjects()
 
 	BuildFont();
 
-	m_pScene = new CScene();
+	m_vScenes.push_back(new CScene());
+	m_vScenes.push_back(new CStartScene());
+	m_vScenes[0]->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+
+	m_pScene = m_vScenes[1];
 	if (m_pScene) m_pScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 
 	CAirplanePlayer *pAirplanePlayer = new CAirplanePlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature());
-	pAirplanePlayer->SetPosition(XMFLOAT3(920.0f, 745.0f, 1270.0));
+	//pAirplanePlayer->SetPosition(XMFLOAT3(920.0f, 745.0f, 1270.0));
 	m_pScene->m_pPlayer = m_pPlayer = pAirplanePlayer;
 	m_pCamera = m_pPlayer->GetCamera();
 
@@ -756,7 +760,7 @@ void CGameFramework::FrameAdvance()
 #ifdef _WITH_PLAYER_TOP
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 #endif
-	if (m_pPlayer) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
+	if (m_pPlayer && (m_eGameState == EGameState::InGame)) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
 
 	RenderUI();
 

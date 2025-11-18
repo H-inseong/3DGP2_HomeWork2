@@ -227,7 +227,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	}
 
 	m_vTextInfos.clear();
-	m_vTextInfos.emplace_back(TextInfo{ "DirectX 12: Scene with Multiple Lights and Materials", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f });
+	AddTextInfo( "DirectX 12: Scene with Multiple Lights and Materials", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f );
 }
 
 void CScene::ReleaseObjects()
@@ -547,5 +547,69 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 
 	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->Render(pd3dCommandList, pCamera);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CStartScene::CStartScene()
+{
+}
+
+CStartScene::~CStartScene()
+{
+}
+
+void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
+
+	m_pBackground = new CGameObject(1, 1);
+
+	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f);
+	m_pBackground->SetMesh(0, pRectMesh);
+
+	CTexture* pBgTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pBgTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/StartBackground.dds", RESOURCE_TEXTURE2D, 0);
+
+	CStandardShader* pShader = new CStandardShader();
+	pShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	CMaterial* pMaterial = new CMaterial();
+	pMaterial->SetTexture(pBgTexture);
+	pMaterial->SetShader(pShader);
+	m_pBackground->SetMaterial(0, pMaterial);
+
+	m_vTextInfos.clear();
+	AddTextInfo("Start Game", XMFLOAT2(FRAME_BUFFER_WIDTH / 2.0f - 50, FRAME_BUFFER_HEIGHT / 2.0f - 20), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+	AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_WIDTH / 2.0f - 20, FRAME_BUFFER_HEIGHT / 2.0f + 20), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+}
+
+void CStartScene::ReleaseObjects()
+{
+	if (m_pBackground)
+	{
+		m_pBackground->Release();
+	}
+}
+
+bool CStartScene::ProcessInput(UCHAR* pKeysBuffer)
+{
+	return false;
+}
+
+void CStartScene::AnimateObjects(float fTimeElapsed)
+{
+}
+
+void CStartScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+{
+	if (m_pd3dGraphicsRootSignature) pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
+	pd3dCommandList->SetDescriptorHeaps(1, &m_pDescriptorHeap->m_pd3dCbvSrvDescriptorHeap);
+
+	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
+	pCamera->UpdateShaderVariables(pd3dCommandList);
+
+	if (m_pBackground) m_pBackground->Render(pd3dCommandList, pCamera);
 }
 
