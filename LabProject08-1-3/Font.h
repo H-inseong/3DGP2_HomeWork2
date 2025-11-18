@@ -25,6 +25,14 @@ struct FONT_INFO
 	float 					Scale;
 };
 
+struct TextInfo
+{
+	std::string				text;
+	XMFLOAT2				position;
+	XMFLOAT4				color;
+	float					fScale;
+};
+
 class CSpriteFont {
 public:
 	CSpriteFont(

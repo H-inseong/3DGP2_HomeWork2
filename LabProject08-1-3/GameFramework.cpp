@@ -428,9 +428,12 @@ void CGameFramework::RenderUI()
 
 	m_pcbMappedFont->ScreenSize = XMFLOAT2((float)m_nWndClientWidth, (float)m_nWndClientHeight);
 	m_pcbMappedFont->TextureSize = XMFLOAT2(512.0f, 512.0f);
-	m_pcbMappedFont->Scale = 1.0f;
 
-	m_pSpriteFont->DrawString(m_pd3dCommandList, "Hello World", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+	for (TextInfo text : m_pScene->m_vTextInfos) {
+		m_pcbMappedFont->Scale = text.fScale;
+
+		m_pSpriteFont->DrawString(m_pd3dCommandList, text.text, text.position, text.color, text.fScale);
+	}
 
 }
 
@@ -672,7 +675,7 @@ void CGameFramework::ProcessInput()
 				else
 					m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 			}
-			if (dwDirection) m_pPlayer->Move(dwDirection, 80.25f, false);
+			if (dwDirection) m_pPlayer->Move(dwDirection, 10.25f, false);
 		}
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());

@@ -676,19 +676,26 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 				int nType = -1;
 				switch (nPixel)
 				{
-				case 102: nType = 0; break; // Grass01
-				case 128: nType = 1; break; // Grass02
-				case 153: nType = 2; break; // Flower01
-				case 179: nType = 3; break; // Flower02
-				case 204: nType = 4; break; // Tree01
-				case 225: nType = 5; break; // Tree02
-				case 255: nType = 6; break; // Tree03
+				case 102: nType = 0;
+					break; // Grass01
+				case 128: nType = 1;
+					break; // Grass02
+				case 153: nType = 2;
+					break; // Flower01
+				case 179: nType = 3;
+					break; // Flower02
+				case 204: nType = 4;
+					break; // Tree01
+				case 225: nType = 5;
+					break; // Tree02
+				case 255: nType = 6;
+					break; // Tree03
 				default: break;
 				}
 				if (nType != -1)
 				{
 					float fHeight = pTerrain->GetHeight(x * xmf3Scale.x, z * xmf3Scale.z);
-					vBillboardVertices.push_back(XMFLOAT4(x * xmf3Scale.x, fHeight + pBillboardSizes[nType].y / 2, z * xmf3Scale.z, (float)nType));
+					vBillboardVertices.push_back(XMFLOAT4(x * xmf3Scale.x, fHeight + pBillboardSizes[nType].y, z * xmf3Scale.z, (float)nType));
 				}
 			}
 		}

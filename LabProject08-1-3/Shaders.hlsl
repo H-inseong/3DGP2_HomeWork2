@@ -291,12 +291,12 @@ void GS_Billboard(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> output
 	vertex.uv = float2(0.0f, 0.0f);
 	outputStream.Append(vertex);
 
-	vertex.position = mul(float4(billboardCenter + camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
-	vertex.uv = float2(1.0f, 0.0f);
-	outputStream.Append(vertex);
-
 	vertex.position = mul(float4(billboardCenter + camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
 	vertex.uv = float2(1.0f, 1.0f);
+	outputStream.Append(vertex);
+
+	vertex.position = mul(float4(billboardCenter + camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
+	vertex.uv = float2(1.0f, 0.0f);
 	outputStream.Append(vertex);
     outputStream.RestartStrip();
 
@@ -308,7 +308,7 @@ float4 PS_Billboard(PS_INPUT input) : SV_TARGET
 {
     float4 cColor = gBillboardTextures[input.typeID].Sample(gssWrap, input.uv);
 	
-	//clip(cColor.a - 0.1f);
+	clip(cColor.a - 0.1f);
 	
     return cColor;
 }

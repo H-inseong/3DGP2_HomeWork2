@@ -9,6 +9,8 @@
 #include "Font.h"
 #include "d3dx12.h"
 
+enum class EGameState { StartScene, InGame, Paused };
+
 class CGameFramework
 {
 public:
@@ -88,6 +90,7 @@ private:
 	CScene						*m_pScene = NULL;
 	std::vector<CScene*>		m_vScenes = {};
 	int							m_nScenes = 0;
+	EGameState					m_eGameState = EGameState::StartScene;
 
 	CPlayer						*m_pPlayer = NULL;
 	CCamera						*m_pCamera = NULL;

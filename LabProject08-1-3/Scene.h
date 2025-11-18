@@ -6,6 +6,7 @@
 
 #include "Shader.h"
 #include "Player.h"
+#include "Font.h"
 
 #define MAX_LIGHTS			16 
 
@@ -78,17 +79,17 @@ public:
 	virtual void ReleaseShaderVariables();
 
 	void BuildDefaultLightsAndMaterials();
-	void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
-	void ReleaseObjects();
+	virtual void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void ReleaseObjects();
+	virtual bool ProcessInput(UCHAR *pKeysBuffer);
+
+	virtual void AnimateObjects(float fTimeElapsed);
+	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera=NULL);
+
+	void ReleaseUploadBuffers();
 
 	ID3D12RootSignature *CreateGraphicsRootSignature(ID3D12Device *pd3dDevice);
 	ID3D12RootSignature *GetGraphicsRootSignature() { return(m_pd3dGraphicsRootSignature); }
-
-	bool ProcessInput(UCHAR *pKeysBuffer);
-    void AnimateObjects(float fTimeElapsed);
-    void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera=NULL);
-
-	void ReleaseUploadBuffers();
 
 	CPlayer								*m_pPlayer = NULL;
 
@@ -111,6 +112,8 @@ public:
 
 	ID3D12Resource						*m_pd3dcbLights = NULL;
 	LIGHTS								*m_pcbMappedLights = NULL;
+
+	std::vector<TextInfo>				m_vTextInfos;
 
 public:
 	static CDescriptorHeap*				m_pDescriptorHeap;
