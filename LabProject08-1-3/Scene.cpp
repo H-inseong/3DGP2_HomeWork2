@@ -322,7 +322,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 
 	pd3dDescriptorRanges[9].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	pd3dDescriptorRanges[9].NumDescriptors = 7;
-	pd3dDescriptorRanges[9].BaseShaderRegister = 17; // ºôº¸µå ÅØ½ºÃÄ 7°³ 17 ~ 23
+	pd3dDescriptorRanges[9].BaseShaderRegister = 17; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½ï¿½ 7ï¿½ï¿½ 17 ~ 23
 	pd3dDescriptorRanges[9].RegisterSpace = 0;
 	pd3dDescriptorRanges[9].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
@@ -460,7 +460,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 
 void CScene::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
-	UINT ncbElementBytes = ((sizeof(LIGHTS) + 255) & ~255); //256ÀÇ ¹è¼ö
+	UINT ncbElementBytes = ((sizeof(LIGHTS) + 255) & ~255);
 	m_pd3dcbLights = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 
 	m_pd3dcbLights->Map(0, NULL, (void **)&m_pcbMappedLights);
@@ -579,18 +579,19 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 
 	m_pBackground = new CGameObject(1, 1);
 
-	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.5f);
+	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f);
 	m_pBackground->SetMesh(0, pRectMesh);
 
 	CTexture* pBgTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pBgTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/StartBackground.dds", RESOURCE_TEXTURE2D, 0);
-	CScene::CreateShaderResourceView(pd3dDevice, pBgTexture, 0, 3);
+	CScene::CreateShaderResourceView(pd3dDevice, pBgTexture, 0, 14);
 
-	CStandardShader* pShader = new CStandardShader();
+	CInterfaceShader* pShader = new CInterfaceShader();
 	pShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	CMaterial* pMaterial = new CMaterial();
 	pMaterial->SetShader(pShader);
 	pMaterial->SetTexture(pBgTexture);
+
 	m_pBackground->SetMaterial(0, pMaterial);
 	m_pBackground->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
