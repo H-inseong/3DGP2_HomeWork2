@@ -408,14 +408,15 @@ void CObjectsShader::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsComman
 			m_ppObjects[i] = new CGunshipObject(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 			m_ppObjects[i]->SetChild(pGunshipModel);
 			pGunshipModel->AddRef();
-			float fRandomX = Random(fRangeMin, fRangeMax);
-			float fRandomZ = Random(fRangeMin, fRangeMax);
-			float fRandomY = Random(fHeightMin, fHeightMax);
-
-			m_ppObjects[i]->SetPosition(fRandomX, fRandomY, fRandomZ);
-			m_ppObjects[i]->Rotate(0.0f, Random(0.0f, 360.0f), 0.0f);
-			m_ppObjects[i]->PrepareAnimate();
 		}
+		float fRandomX = Random(fRangeMin, fRangeMax);
+		float fRandomZ = Random(fRangeMin, fRangeMax);
+		float fRandomY = Random(fHeightMin, fHeightMax);
+
+		m_ppObjects[i]->SetPosition(fRandomX, fRandomY, fRandomZ);
+		m_ppObjects[i]->Rotate(0.0f, Random(0.0f, 360.0f), 0.0f);
+		m_ppObjects[i]->PrepareAnimate();
+
 	}
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
