@@ -54,6 +54,7 @@ using Microsoft::WRL::ComPtr;
 #define SCENE_ACTION_NONE   0
 #define SCENE_ACTION_START  1
 #define SCENE_ACTION_QUIT   2
+#define SCENE_ACTION_MENU   3
 
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
