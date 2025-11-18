@@ -22,12 +22,14 @@ public:
 
 	void SetGameObject(CGameObject* pGameObjcet);
 	bool IsClicked(int x, int y);
+	void OnMouseMove(int x, int y) { m_bIsHovered = IsClicked(x, y); };
 
 	CGameObject* GetGameObject() { return m_pGameObject; }
-
+	bool GetIsHovered() { return m_bIsHovered; }
 private:
 	RECT m_rect;
 	CGameObject* m_pGameObject = nullptr;
+	bool m_bIsHovered;
 };
 
 struct LIGHT
@@ -87,7 +89,7 @@ public:
     CScene();
     ~CScene();
 
-	bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
 	virtual void CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
@@ -140,7 +142,8 @@ public:
 		m_vTextInfos.push_back(textInfo);
 	};
 
-	std::vector<CButton*> m_vButtons;
+	std::vector<CButton>				m_vButtons;
+	CSpriteFont*						m_pSpriteFont;
 
 public:
 	static CDescriptorHeap*				m_pDescriptorHeap;
@@ -171,6 +174,7 @@ class CStartScene : public CScene
 	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList) override;
 	virtual void ReleaseObjects() override;
 
+	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam) override;
 	virtual bool ProcessInput(UCHAR* pKeysBuffer) override;
 	virtual void AnimateObjects(float fTimeElapsed) override;
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = nullptr) override;

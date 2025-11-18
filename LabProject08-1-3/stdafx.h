@@ -49,6 +49,12 @@ using Microsoft::WRL::ComPtr;
 #define FRAME_BUFFER_WIDTH		1280
 #define FRAME_BUFFER_HEIGHT		720
 
+#define WM_SCENE_ACTION     (WM_USER + 1)
+
+#define SCENE_ACTION_NONE   0
+#define SCENE_ACTION_START  1
+#define SCENE_ACTION_QUIT   2
+
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")

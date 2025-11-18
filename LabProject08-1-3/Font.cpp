@@ -208,3 +208,20 @@ void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::st
 	pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	pd3dCommandList->DrawInstanced(nChars, 1, m_nFrameOffset - nChars, 0);
 }
+
+XMFLOAT2 CSpriteFont::MeasureString(TextInfo t_info)
+{
+	float fWidth = 0.0f;
+	float fHeight = (float)m_nLineHeight * t_info.fScale;
+
+	for (char c : t_info.text)
+	{
+
+		if (c < 0 || c >= static_cast<unsigned char>(m_vCharInfos.size())) continue;
+
+		const Fnt_Data& charInfo = m_vCharInfos[static_cast<size_t>(c)];
+		fWidth += charInfo.xadvance * t_info.fScale;
+	}
+
+	return XMFLOAT2(fWidth, fHeight);
+}

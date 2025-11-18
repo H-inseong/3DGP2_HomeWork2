@@ -56,7 +56,7 @@ public:
 		float fScale = 1.0f);
 
 	XMFLOAT2 GetTextureSize() const { return XMFLOAT2((float)m_nScaleW,(float)m_nScaleH); }
-
+	XMFLOAT2 MeasureString(TextInfo);
 private:
 	CTexture*				m_pTexture = nullptr;
 	std::vector<Fnt_Data>	m_vCharInfos;
