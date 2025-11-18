@@ -227,7 +227,9 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	}
 
 	m_vTextInfos.clear();
-	AddTextInfo( "DirectX 12: Scene with Multiple Lights and Materials", XMFLOAT2(0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f );
+	AddTextInfo( "Enemy 120 / 120", XMFLOAT2(10.0f, 10.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f );
+	AddTextInfo( "Time : ", XMFLOAT2(FRAME_BUFFER_WIDTH / 2, 10.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
+	m_fGameTime = 0.0f;
 }
 
 void CScene::ReleaseObjects()
@@ -529,6 +531,7 @@ bool CScene::ProcessInput(UCHAR *pKeysBuffer)
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
+
 	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Animate(fTimeElapsed, NULL);
 	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->UpdateTransform(NULL);
 
@@ -553,8 +556,6 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		if (xmf3PlayerPos.z < fMinZ) xmf3PlayerPos.z = fMinZ;
 		if (xmf3PlayerPos.z > fMaxZ) xmf3PlayerPos.z = fMaxZ;
 
-
-		// (3) 높이(Y축) 충돌 처리 (범위 제한된 X, Z 좌표 사용)
 		float fTerrainHeight = m_pTerrain->GetHeight(xmf3PlayerPos.x, xmf3PlayerPos.z);
 		float fPlayerOffset = 5.0f;
 
@@ -562,10 +563,11 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		{
 			xmf3PlayerPos.y = fTerrainHeight + fPlayerOffset;
 		}
-
-		// (4) 최종 보정된 위치 적용
 		m_pPlayer->SetPosition(xmf3PlayerPos);
 	}
+
+	CObjectsShader* pEnemyShader = dynamic_cast<CObjectsShader*>(m_ppShaders[0]);
+
 	if (m_pPlayer && m_pPlayer->IsActive())
 	{
 		CObjectsShader* pHelicopterShader = dynamic_cast<CObjectsShader*>(m_ppShaders[0]);
@@ -576,10 +578,36 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		}
 	}
 
+
 	if (m_pLights)
 	{
 		m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
 		m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
+	}
+
+	if (pEnemyShader)
+	{
+		int nTotal = pEnemyShader->GetNumberOfObjects();
+		int nDeath= pEnemyShader->GetNumberOfDeathObjects();
+
+		char pstrBuffer[64] = { 0 };
+		sprintf_s(pstrBuffer, 64, "Enemy: %d / %d", nTotal, nTotal - nDeath);
+
+		if (!m_vTextInfos.empty())
+		{
+			m_vTextInfos[0].text = pstrBuffer;
+
+		}
+	}
+
+	m_fGameTime += fTimeElapsed;
+
+	if (m_vTextInfos.size() > 1) {
+		char pstrTimeBuffer[64] = { 0 };
+		// 소수점 2자리까지 표시 (예: Time : 12.34)
+		sprintf_s(pstrTimeBuffer, 64, "Time : %.2f", m_fGameTime);
+
+		m_vTextInfos[1].text = pstrTimeBuffer;
 	}
 }
 

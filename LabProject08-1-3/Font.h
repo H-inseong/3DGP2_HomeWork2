@@ -27,7 +27,7 @@ struct FONT_INFO
 
 struct TextInfo
 {
-	std::string_view		text;
+	std::string				text;
 	XMFLOAT2				position;
 	XMFLOAT4				color;
 	float					fScale;
@@ -50,7 +50,7 @@ public:
 	void Reset() { m_nFrameOffset = 0; }
 	void DrawString(
 		ID3D12GraphicsCommandList* pd3dCommandList,
-		std::string_view text,
+		std::string text,
 		XMFLOAT2 position,
 		XMFLOAT4 color,
 		float fScale = 1.0f);

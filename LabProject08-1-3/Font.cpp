@@ -183,7 +183,7 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 	return true;
 }
 
-void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::string_view text, XMFLOAT2 position, XMFLOAT4 color, float fScale)
+void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::string text, XMFLOAT2 position, XMFLOAT4 color, float fScale)
 {
 	if (!m_pTexture) return;
 
