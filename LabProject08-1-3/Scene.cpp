@@ -328,7 +328,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 
 	pd3dDescriptorRanges[10].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	pd3dDescriptorRanges[10].NumDescriptors = 1;
-	pd3dDescriptorRanges[10].BaseShaderRegister = 24; // 빌보드 텍스쳐 7개
+	pd3dDescriptorRanges[10].BaseShaderRegister = 24; //
 	pd3dDescriptorRanges[10].RegisterSpace = 0;
 	pd3dDescriptorRanges[10].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
@@ -579,7 +579,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 
 	m_pBackground = new CGameObject(1, 1);
 
-	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 1280.0f, 720.0f, 0.0f, 0.0f, 0.0f);
+	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.5f);
 	m_pBackground->SetMesh(0, pRectMesh);
 
 	CTexture* pBgTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
@@ -592,6 +592,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	pMaterial->SetShader(pShader);
 	pMaterial->SetTexture(pBgTexture);
 	m_pBackground->SetMaterial(0, pMaterial);
+	m_pBackground->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
 	m_vTextInfos.clear();
 	AddTextInfo("Start", XMFLOAT2(FRAME_BUFFER_WIDTH / 2, FRAME_BUFFER_HEIGHT / 2.0f + 100), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
