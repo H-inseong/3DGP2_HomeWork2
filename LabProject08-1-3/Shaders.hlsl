@@ -242,7 +242,7 @@ float4 PSTerrain(VS_TERRAIN_OUTPUT input) : SV_TARGET
 
 cbuffer cbBillboardInfo : register(b5)
 {
-    float2 gBillboardSize[7] : packoffset(c0);
+    float2 gBillboardSize[7];
 };
 Texture2D gBillboardTextures[7] : register(t17);
 

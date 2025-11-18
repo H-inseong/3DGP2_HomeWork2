@@ -589,7 +589,7 @@ CBillboardShader::~CBillboardShader()
 
 D3D12_INPUT_LAYOUT_DESC CBillboardShader::CreateInputLayout()
 {
-	UINT nInputElementDescs = 2;
+	UINT nInputElementDescs = 1;
 	D3D12_INPUT_ELEMENT_DESC* pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
 	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
@@ -616,17 +616,17 @@ D3D12_BLEND_DESC CBillboardShader::CreateBlendState()
 
 D3D12_SHADER_BYTECODE CBillboardShader::CreateVertexShader()
 {
-	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VS_BillboardPoints", "vs_5_1", &m_pd3dVertexShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VS_Billboard", "vs_5_1", &m_pd3dVertexShaderBlob));
 }
 
 D3D12_SHADER_BYTECODE CBillboardShader::CreateGeometryShader()
 {
-	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "GS_BillboardPoints", "gs_5_1", &m_pd3dGeometryShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "GS_Billboard", "gs_5_1", &m_pd3dGeometryShaderBlob));
 }
 
 D3D12_SHADER_BYTECODE CBillboardShader::CreatePixelShader()
 {
-	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PS_BillboardPoints", "ps_5_1", &m_pd3dPixelShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PS_Billboard", "ps_5_1", &m_pd3dPixelShaderBlob));
 }
 
 void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext)
@@ -681,6 +681,7 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 				}
 			}
 		}
+
 	}
 	if(!vBillboardVertices.empty())
 	{
@@ -702,6 +703,24 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 		m_d3dVertexBufferView.StrideInBytes = sizeof(XMFLOAT4);
 		m_d3dVertexBufferView.SizeInBytes = sizeof(XMFLOAT4) * m_nVertices;
 	}
+
+	XMFLOAT2 pBillboardSizes[] = {
+		XMFLOAT2(8.0f, 8.0f),		// Grass01
+		XMFLOAT2(6.0f, 6.0f),		// Grass02
+		XMFLOAT2(8.0f, 16.0f),		// Flower01
+		XMFLOAT2(8.0f, 16.0f),		// Flower02
+		XMFLOAT2(24.0f, 33.0f),		// Tree01
+		XMFLOAT2(24.0f, 33.0f),		// Tree02
+		XMFLOAT2(16.0f, 40.0f)		// Tree03
+	};
+
+	UINT ncbElementBytes = ((sizeof(XMFLOAT2) * m_nTextures + 255) & ~255);
+	m_pd3dcbBillboard = ::CreateBufferResource(pd3dDevice, pd3dCommandList, nullptr, ncbElementBytes,
+		D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
+
+	m_pd3dcbBillboard->Map(0, NULL, (void**)&m_pcbMappedBillboard);
+	memcpy(m_pcbMappedBillboard, pBillboardSizes, sizeof(XMFLOAT2) * m_nTextures);
+
 }
 
 void CBillboardShader::ReleaseObjects()
@@ -711,18 +730,23 @@ void CBillboardShader::ReleaseObjects()
 		if (m_ppBillboardTextures[i])
 		{
 			m_ppBillboardTextures[i]->Release();
-			delete m_ppBillboardTextures[i];
 		}
 	}
-	delete[] m_ppBillboardTextures;
-
+	if (m_ppBillboardTextures)
+	{
+		delete[] m_ppBillboardTextures;
+	}
+	if (m_pRawFormatImage)
+	{
+		delete m_pRawFormatImage;
+	}
 }
 
 void CBillboardShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState)
 {
 	CShader::OnPrepareRender(pd3dCommandList, nPipelineState);
 
-	pd3dCommandList->SetGraphicsRootConstantBufferView(0, m_pd3dcbBillboard->GetGPUVirtualAddress());
+	pd3dCommandList->SetGraphicsRootConstantBufferView(12, m_pd3dcbBillboard->GetGPUVirtualAddress());
 
 	if (m_ppBillboardTextures)
 	{
@@ -732,4 +756,15 @@ void CBillboardShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamer
 	pd3dCommandList->IASetVertexBuffers(0, 1, &m_d3dVertexBufferView);
 
 	if (m_nVertices > 0) pd3dCommandList->DrawInstanced(m_nVertices, 1, 0, 0);
+}
+
+void CBillboardShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+{
+	m_nPipelineStates = 1;
+	m_ppd3dPipelineStates = new ID3D12PipelineState * [m_nPipelineStates];
+	CShader::CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+	if (m_pd3dVertexShaderBlob) m_pd3dVertexShaderBlob->Release();
+	if (m_pd3dGeometryShaderBlob) m_pd3dGeometryShaderBlob->Release();
+	if (m_pd3dPixelShaderBlob) m_pd3dPixelShaderBlob->Release();
+	if (m_d3dPipelineStateDesc.InputLayout.pInputElementDescs) delete[] m_d3dPipelineStateDesc.InputLayout.pInputElementDescs;
 }

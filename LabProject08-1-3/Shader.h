@@ -172,9 +172,14 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateGeometryShader();
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+
 	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext = NULL);
 	virtual void ReleaseObjects();
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState = 0);
+
+	int GetTextureCount() { return m_nTextures; }
+	CTexture* GetTexture(int i) { return m_ppBillboardTextures[i]; }
 
 protected:
 	ID3D12Resource*						m_pd3dVertexBuffer = NULL;
