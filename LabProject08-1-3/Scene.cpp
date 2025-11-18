@@ -524,7 +524,7 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		for (int i = 0; i < m_vButtons.size(); ++i)
 		{
 			m_vButtons[i].OnMouseMove(x, y);
-			m_vTextInfos[i].color = (m_vButtons[i].GetIsHovered()) ? XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f) : XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+			m_vTextInfos[i+1].color = (m_vButtons[i].GetIsHovered()) ? XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f) : XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 		break;
 	default:
@@ -546,34 +546,39 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			//case 'D': m_ppGameObjects[0]->MoveStrafe(+1.0f); break;
 			//case 'Q': m_ppGameObjects[0]->MoveUp(+1.0f); break;
 			//case 'R': m_ppGameObjects[0]->MoveUp(-1.0f); break;
+		case VK_ESCAPE:
+		{
+			if (!m_bPaused) {
+				m_vTextInfos.clear();
+				AddTextInfo("Pause", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 1), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f);
+				AddTextInfo("Resume", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 2), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+				AddTextInfo("Quit", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 3), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+				for (int i = 1; i < m_vTextInfos.size(); ++i)
+				{
+					XMFLOAT2 size = { 0.0f, 0.0f };
+					if (m_pSpriteFont)
+					{
+						size = m_pSpriteFont->MeasureString(m_vTextInfos[i]);
+					}
+
+					RECT rcButton;
+					rcButton.left = (LONG)m_vTextInfos[i].position.x;
+					rcButton.top = (LONG)m_vTextInfos[i].position.y;
+					rcButton.right = (LONG)(m_vTextInfos[i].position.x + size.x);
+					rcButton.bottom = (LONG)(m_vTextInfos[i].position.y + size.y);
+
+					m_vButtons.emplace_back(rcButton);
+				}
+				m_bPaused = true;
+				::PostMessage(hWnd, WM_SCENE_ACTION, SCENE_ACTION_PAUSE, 0);
+			}
+			break;
+		}
 		default:
 			break;
 		}
-	case VK_ESCAPE:
-	{
-		m_vTextInfos.clear();
-		AddTextInfo("Pause", XMFLOAT2(FRAME_BUFFER_HEIGHT / 2 - 200, FRAME_BUFFER_WIDTH / 4 * 3), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f);
-		AddTextInfo("Resume", XMFLOAT2(FRAME_BUFFER_HEIGHT / 2, FRAME_BUFFER_WIDTH / 4 * 3), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
-		AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_HEIGHT / 2, FRAME_BUFFER_WIDTH / 4 * 3), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
-		for (int i = 1; i < m_vTextInfos.size(); ++i)
-		{
-			XMFLOAT2 size = { 0.0f, 0.0f };
-			if (m_pSpriteFont)
-			{
-				size = m_pSpriteFont->MeasureString(m_vTextInfos[i]);
-			}
-
-			RECT rcButton;
-			rcButton.left = (LONG)m_vTextInfos[i].position.x;
-			rcButton.top = (LONG)m_vTextInfos[i].position.y;
-			rcButton.right = (LONG)(m_vTextInfos[i].position.x + size.x);
-			rcButton.bottom = (LONG)(m_vTextInfos[i].position.y + size.y);
-
-			m_vButtons.emplace_back(rcButton);
-		}
-		::PostMessage(hWnd, WM_SCENE_ACTION, SCENE_ACTION_PAUSE, 0);
 		break;
-	}
+	
 	default:
 		break;
 	}
@@ -588,82 +593,84 @@ bool CScene::ProcessInput(UCHAR *pKeysBuffer)
 void CScene::AnimateObjects(float fTimeElapsed)
 {
 
-	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Animate(fTimeElapsed, NULL);
-	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->UpdateTransform(NULL);
+	if(!m_bPaused){
+		for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Animate(fTimeElapsed, NULL);
+		for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->UpdateTransform(NULL);
 
-	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->AnimateObjects(fTimeElapsed);
+		for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 
-	if (m_pPlayer && m_pTerrain)
-	{
-		XMFLOAT3 xmf3PlayerPos = m_pPlayer->GetPosition();
-
-
-		float fMargin = 5.0f;
-		float fMinX = fMargin;
-		float fMinZ = fMargin;
-		float fMaxX = m_pTerrain->GetWidth() - fMargin;
-		float fMaxZ = m_pTerrain->GetLength() - fMargin;
-
-		// X축 가두기
-		if (xmf3PlayerPos.x < fMinX) xmf3PlayerPos.x = fMinX;
-		if (xmf3PlayerPos.x > fMaxX) xmf3PlayerPos.x = fMaxX;
-
-		// Z축 가두기
-		if (xmf3PlayerPos.z < fMinZ) xmf3PlayerPos.z = fMinZ;
-		if (xmf3PlayerPos.z > fMaxZ) xmf3PlayerPos.z = fMaxZ;
-
-		float fTerrainHeight = m_pTerrain->GetHeight(xmf3PlayerPos.x, xmf3PlayerPos.z);
-		float fPlayerOffset = 5.0f;
-
-		if (xmf3PlayerPos.y <= (fTerrainHeight + fPlayerOffset))
+		if (m_pPlayer && m_pTerrain)
 		{
-			xmf3PlayerPos.y = fTerrainHeight + fPlayerOffset;
+			XMFLOAT3 xmf3PlayerPos = m_pPlayer->GetPosition();
+
+
+			float fMargin = 5.0f;
+			float fMinX = fMargin;
+			float fMinZ = fMargin;
+			float fMaxX = m_pTerrain->GetWidth() - fMargin;
+			float fMaxZ = m_pTerrain->GetLength() - fMargin;
+
+			// X축 가두기
+			if (xmf3PlayerPos.x < fMinX) xmf3PlayerPos.x = fMinX;
+			if (xmf3PlayerPos.x > fMaxX) xmf3PlayerPos.x = fMaxX;
+
+			// Z축 가두기
+			if (xmf3PlayerPos.z < fMinZ) xmf3PlayerPos.z = fMinZ;
+			if (xmf3PlayerPos.z > fMaxZ) xmf3PlayerPos.z = fMaxZ;
+
+			float fTerrainHeight = m_pTerrain->GetHeight(xmf3PlayerPos.x, xmf3PlayerPos.z);
+			float fPlayerOffset = 5.0f;
+
+			if (xmf3PlayerPos.y <= (fTerrainHeight + fPlayerOffset))
+			{
+				xmf3PlayerPos.y = fTerrainHeight + fPlayerOffset;
+			}
+			m_pPlayer->SetPosition(xmf3PlayerPos);
 		}
-		m_pPlayer->SetPosition(xmf3PlayerPos);
-	}
 
-	CObjectsShader* pEnemyShader = dynamic_cast<CObjectsShader*>(m_ppShaders[0]);
+		CObjectsShader* pEnemyShader = dynamic_cast<CObjectsShader*>(m_ppShaders[0]);
 
-	if (m_pPlayer && m_pPlayer->IsActive())
-	{
-		CObjectsShader* pHelicopterShader = dynamic_cast<CObjectsShader*>(m_ppShaders[0]);
-
-		if (pHelicopterShader)
+		if (m_pPlayer && m_pPlayer->IsActive())
 		{
-			pHelicopterShader->CheckObjectCollisions(m_pPlayer);
+			CObjectsShader* pHelicopterShader = dynamic_cast<CObjectsShader*>(m_ppShaders[0]);
+
+			if (pHelicopterShader)
+			{
+				pHelicopterShader->CheckObjectCollisions(m_pPlayer);
+			}
 		}
-	}
 
 
-	if (m_pLights)
-	{
-		m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
-		m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
-	}
-
-	if (pEnemyShader)
-	{
-		int nTotal = pEnemyShader->GetNumberOfObjects();
-		int nDeath= pEnemyShader->GetNumberOfDeathObjects();
-
-		char pstrBuffer[64] = { 0 };
-		sprintf_s(pstrBuffer, 64, "Enemy: %d / %d", nTotal, nTotal - nDeath);
-
-		if (!m_vTextInfos.empty())
+		if (m_pLights)
 		{
-			m_vTextInfos[0].text = pstrBuffer;
-
+			m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
+			m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
 		}
-	}
 
-	m_fGameTime += fTimeElapsed;
+		if (pEnemyShader)
+		{
+			int nTotal = pEnemyShader->GetNumberOfObjects();
+			int nDeath = pEnemyShader->GetNumberOfDeathObjects();
 
-	if (m_vTextInfos.size() > 1) {
-		char pstrTimeBuffer[64] = { 0 };
-		// 소수점 2자리까지 표시 (예: Time : 12.34)
-		sprintf_s(pstrTimeBuffer, 64, "Time : %.2f", m_fGameTime);
+			char pstrBuffer[64] = { 0 };
+			sprintf_s(pstrBuffer, 64, "Enemy: %d / %d", nTotal, nTotal - nDeath);
 
-		m_vTextInfos[1].text = pstrTimeBuffer;
+			if (!m_vTextInfos.empty())
+			{
+				m_vTextInfos[0].text = pstrBuffer;
+
+			}
+		}
+
+		m_fGameTime += fTimeElapsed;
+
+		if (m_vTextInfos.size() > 1) {
+			char pstrTimeBuffer[64] = { 0 };
+			// 소수점 2자리까지 표시 (예: Time : 12.34)
+			sprintf_s(pstrTimeBuffer, 64, "Time : %.2f", m_fGameTime);
+
+			m_vTextInfos[1].text = pstrTimeBuffer;
+		}
 	}
 }
 
@@ -693,6 +700,7 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 
 CStartScene::CStartScene()
 {
+	m_bPaused = true;
 }
 
 CStartScene::~CStartScene()

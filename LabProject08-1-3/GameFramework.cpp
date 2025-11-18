@@ -385,6 +385,15 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 			{
 				m_eGameState = EGameState::Paused;
 			}
+			else if (nAction == SCENE_ACTION_RESUME)
+			{
+				m_eGameState = EGameState::InGame;
+				m_pScene->m_bPaused = false;
+				m_pScene->m_vTextInfos.clear();
+				m_pScene->AddTextInfo("Enemy 120 / 120", XMFLOAT2(10.0f, 10.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
+				m_pScene->AddTextInfo("Time : ", XMFLOAT2(FRAME_BUFFER_WIDTH / 2, 10.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
+				m_pScene->m_vButtons.clear();
+			}
 			break;
 		}
 		

@@ -145,6 +145,7 @@ public:
 	std::vector<CButton>				m_vButtons;
 	CSpriteFont*						m_pSpriteFont;
 	float m_fGameTime = 0.0f;
+	bool m_bPaused = false;
 public:
 	static CDescriptorHeap*				m_pDescriptorHeap;
 
