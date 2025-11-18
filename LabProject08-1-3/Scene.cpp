@@ -579,7 +579,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 
 	m_pBackground = new CGameObject(1, 1);
 
-	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f);
+	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.5f);
 	m_pBackground->SetMesh(0, pRectMesh);
 
 	CTexture* pBgTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
@@ -596,8 +596,8 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	m_pBackground->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
 	m_vTextInfos.clear();
-	AddTextInfo("Start", XMFLOAT2(FRAME_BUFFER_WIDTH / 2, FRAME_BUFFER_HEIGHT / 2.0f + 100), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
-	AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_WIDTH / 2, FRAME_BUFFER_HEIGHT / 2.0f + 164), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+	AddTextInfo("Start", XMFLOAT2(FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT / 2.0f ), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+	AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT / 2.0f +64), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
 }
 
 void CStartScene::ReleaseObjects()
@@ -628,3 +628,26 @@ void CStartScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pC
 	if (m_pBackground) m_pBackground->Render(pd3dCommandList, pCamera);
 }
 
+CButton::CButton(const RECT& rect)
+{
+	m_rect = rect;
+	m_pGameObject = NULL;
+}
+
+CButton::~CButton()
+{
+	if (m_pGameObject) m_pGameObject->Release();
+}
+
+void CButton::SetGameObject(CGameObject* pGameObjcet)
+{
+	if (m_pGameObject) m_pGameObject->Release();
+	m_pGameObject = pGameObjcet;
+	if (m_pGameObject) m_pGameObject->AddRef();
+}
+
+bool CButton::IsClicked(int x, int y)
+{
+	POINT pt = { x,y };
+	return ::PtInRect(&m_rect, pt);
+}

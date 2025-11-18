@@ -14,6 +14,22 @@
 #define SPOT_LIGHT			2
 #define DIRECTIONAL_LIGHT	3
 
+class CButton
+{
+public:
+	CButton(const RECT& rect);
+	~CButton();
+
+	void SetGameObject(CGameObject* pGameObjcet);
+	bool IsClicked(int x, int y);
+
+	CGameObject* GetGameObject() { return m_pGameObject; }
+
+private:
+	RECT m_rect;
+	CGameObject* m_pGameObject = nullptr;
+};
+
 struct LIGHT
 {
 	XMFLOAT4				m_xmf4Ambient;
@@ -124,6 +140,8 @@ public:
 		m_vTextInfos.push_back(textInfo);
 	};
 
+	std::vector<CButton*> m_vButtons;
+
 public:
 	static CDescriptorHeap*				m_pDescriptorHeap;
 
@@ -155,7 +173,8 @@ class CStartScene : public CScene
 
 	virtual bool ProcessInput(UCHAR* pKeysBuffer) override;
 	virtual void AnimateObjects(float fTimeElapsed) override;
-	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL) override;
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = nullptr) override;
 
 	CGameObject*			m_pBackground;
 };
+
