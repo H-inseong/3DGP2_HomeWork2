@@ -317,9 +317,6 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case WM_KEYUP:
 			switch (wParam)
 			{
-				case VK_ESCAPE:
-					::PostQuitMessage(0);
-					break;
 				case VK_RETURN:
 					break;
 				case VK_F1:
@@ -383,6 +380,10 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 			else if (nAction == SCENE_ACTION_QUIT)
 			{
 				::PostQuitMessage(0);
+			}
+			else if (nAction == SCENE_ACTION_PAUSE)
+			{
+				m_eGameState = EGameState::Paused;
 			}
 			break;
 		}
@@ -718,9 +719,12 @@ void CGameFramework::AnimateObjects()
 {
 	float fTimeElapsed = m_GameTimer.GetTimeElapsed();
 
-	if (m_pScene) m_pScene->AnimateObjects(fTimeElapsed);
+	if (m_eGameState == EGameState::InGame)
+	{
+		if (m_pScene) m_pScene->AnimateObjects(fTimeElapsed);
 
-	m_pPlayer->Animate(fTimeElapsed, NULL);
+		m_pPlayer->Animate(fTimeElapsed, NULL);
+	}
 }
 
 void CGameFramework::WaitForGpuComplete()
@@ -789,8 +793,9 @@ void CGameFramework::FrameAdvance()
 #ifdef _WITH_PLAYER_TOP
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 #endif
-	if (m_pPlayer && (m_eGameState == EGameState::InGame)) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
+	if (m_pPlayer && (m_eGameState != EGameState::StartScene)) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
+
 	RenderUI();
 
 	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;

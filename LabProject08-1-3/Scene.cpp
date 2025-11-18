@@ -498,7 +498,39 @@ void CScene::ReleaseUploadBuffers()
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-	return(false);
+	int x = LOWORD(lParam);
+	int y = HIWORD(lParam);
+
+	switch (nMessageID)
+	{
+	case WM_LBUTTONUP:
+		for (int i = 0; i < m_vButtons.size(); ++i)
+		{
+			if (m_vButtons[i].IsClicked(x, y))
+			{
+				if (i == 0)
+				{
+					::PostMessage(hWnd, WM_SCENE_ACTION, SCENE_ACTION_RESUME, 0);
+				}
+				if (i == 1)
+				{
+					::PostQuitMessage(0);
+				}
+				return true;
+			}
+		}
+		break;
+	case WM_MOUSEMOVE:
+		for (int i = 0; i < m_vButtons.size(); ++i)
+		{
+			m_vButtons[i].OnMouseMove(x, y);
+			m_vTextInfos[i].color = (m_vButtons[i].GetIsHovered()) ? XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f) : XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+		break;
+	default:
+		break;
+	}
+	return false;
 }
 
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
@@ -508,16 +540,40 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		//case 'W': m_ppGameObjects[0]->MoveForward(+1.0f); break;
-		//case 'S': m_ppGameObjects[0]->MoveForward(-1.0f); break;
-		//case 'A': m_ppGameObjects[0]->MoveStrafe(-1.0f); break;
-		//case 'D': m_ppGameObjects[0]->MoveStrafe(+1.0f); break;
-		//case 'Q': m_ppGameObjects[0]->MoveUp(+1.0f); break;
-		//case 'R': m_ppGameObjects[0]->MoveUp(-1.0f); break;
+			//case 'W': m_ppGameObjects[0]->MoveForward(+1.0f); break;
+			//case 'S': m_ppGameObjects[0]->MoveForward(-1.0f); break;
+			//case 'A': m_ppGameObjects[0]->MoveStrafe(-1.0f); break;
+			//case 'D': m_ppGameObjects[0]->MoveStrafe(+1.0f); break;
+			//case 'Q': m_ppGameObjects[0]->MoveUp(+1.0f); break;
+			//case 'R': m_ppGameObjects[0]->MoveUp(-1.0f); break;
 		default:
 			break;
 		}
+	case VK_ESCAPE:
+	{
+		m_vTextInfos.clear();
+		AddTextInfo("Pause", XMFLOAT2(FRAME_BUFFER_HEIGHT / 2 - 200, FRAME_BUFFER_WIDTH / 4 * 3), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f);
+		AddTextInfo("Resume", XMFLOAT2(FRAME_BUFFER_HEIGHT / 2, FRAME_BUFFER_WIDTH / 4 * 3), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+		AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_HEIGHT / 2, FRAME_BUFFER_WIDTH / 4 * 3), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+		for (int i = 1; i < m_vTextInfos.size(); ++i)
+		{
+			XMFLOAT2 size = { 0.0f, 0.0f };
+			if (m_pSpriteFont)
+			{
+				size = m_pSpriteFont->MeasureString(m_vTextInfos[i]);
+			}
+
+			RECT rcButton;
+			rcButton.left = (LONG)m_vTextInfos[i].position.x;
+			rcButton.top = (LONG)m_vTextInfos[i].position.y;
+			rcButton.right = (LONG)(m_vTextInfos[i].position.x + size.x);
+			rcButton.bottom = (LONG)(m_vTextInfos[i].position.y + size.y);
+
+			m_vButtons.emplace_back(rcButton);
+		}
+		::PostMessage(hWnd, WM_SCENE_ACTION, SCENE_ACTION_PAUSE, 0);
 		break;
+	}
 	default:
 		break;
 	}
@@ -671,7 +727,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 
 	for (int i = 0; i < m_vTextInfos.size(); ++i)
 	{
-		XMFLOAT2 size = { 100.0f, 30.0f };
+		XMFLOAT2 size = { 0.0f, 0.0f };
 		if (m_pSpriteFont)
 		{
 			size = m_pSpriteFont->MeasureString(m_vTextInfos[i]);
