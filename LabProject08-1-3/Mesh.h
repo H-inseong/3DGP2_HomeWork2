@@ -227,5 +227,4 @@ public:
 	virtual ~CBillboardPointListMesh();
 
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet);
-
 };

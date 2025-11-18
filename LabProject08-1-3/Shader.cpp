@@ -580,6 +580,7 @@ void CTerrainShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsComman
 
 CBillboardShader::CBillboardShader()
 {
+	m_pRawFormatImage = new CRawFormatImage(L"Image/ObjectsMap.raw", 257, 257, true);
 }
 
 CBillboardShader::~CBillboardShader()
@@ -588,9 +589,9 @@ CBillboardShader::~CBillboardShader()
 
 D3D12_INPUT_LAYOUT_DESC CBillboardShader::CreateInputLayout()
 {
-	UINT nInputElementDescs = 1;
+	UINT nInputElementDescs = 2;
 	D3D12_INPUT_ELEMENT_DESC* pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
-	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
 	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
 	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
@@ -626,4 +627,86 @@ D3D12_SHADER_BYTECODE CBillboardShader::CreateGeometryShader()
 D3D12_SHADER_BYTECODE CBillboardShader::CreatePixelShader()
 {
 	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PS_BillboardPoints", "ps_5_1", &m_pd3dPixelShaderBlob));
+}
+
+void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext)
+{
+	m_nTextures = 7;
+	m_ppBillboardTextures = new CTexture * [m_nTextures];
+	wchar_t* pszBillboardTextures[] =
+	{
+		L"Image/Grass01.dds",
+		L"Image/Grass02.dds",
+		L"Image/Flower01.dds",
+		L"Image/Flower02.dds",
+		L"Image/Tree01.dds",
+		L"Image/Tree02.dds",
+		L"Image/Tree03.dds"
+	};
+
+	for (int i = 0; i < m_nTextures; i++)
+	{
+		m_ppBillboardTextures[i] = new CTexture(1, RESOURCE_TEXTURE2D, 0,1);
+		m_ppBillboardTextures[i]->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, pszBillboardTextures[i], RESOURCE_TEXTURE2D, 0);
+	}
+
+	CHeightMapTerrain* pTerrain = (CHeightMapTerrain*)pContext;
+
+	std::vector<XMFLOAT4> vBillboardVertices;
+
+	if(pTerrain && m_pRawFormatImage)
+	{
+		XMFLOAT3 xmf3Scale = pTerrain->GetScale();
+		for (int z = 0; z < m_pRawFormatImage->GetRawImageLength(); z++)
+		{
+			for (int x = 0; x < m_pRawFormatImage->GetRawImageWidth(); x++)
+			{
+				BYTE nPixel = m_pRawFormatImage->GetRawImagePixel(x, z);
+				int nType = -1;
+				switch (nPixel)
+				{
+				case 102: nType = 0; break; // Grass01
+				case 128: nType = 1; break; // Grass02
+				case 153: nType = 2; break; // Flower01
+				case 179: nType = 3; break; // Flower02
+				case 204: nType = 4; break; // Tree01
+				case 225: nType = 5; break; // Tree02
+				case 255: nType = 6; break; // Tree03
+				default: break;
+				}
+				if (nType != -1)
+				{
+					float fHeight = pTerrain->GetHeight(x * xmf3Scale.x, z * xmf3Scale.z);
+					vBillboardVertices.push_back(XMFLOAT4(x * xmf3Scale.x, fHeight, z * xmf3Scale.z, (float)nType));
+				}
+			}
+		}
+	}
+	if(!vBillboardVertices.empty())
+	{
+		//m_pBillboardMesh = new CBillboardPointListMesh(pd3dDevice, pd3dCommandList, vBillboardVertices);
+	}
+}
+
+void CBillboardShader::ReleaseObjects()
+{
+	for (int i = 0; i < m_nTextures; i++)
+	{
+		if (m_ppBillboardTextures[i])
+		{
+			m_ppBillboardTextures[i]->Release();
+			delete m_ppBillboardTextures[i];
+		}
+	}
+	delete[] m_ppBillboardTextures;
+	if (m_pBillboardMesh)
+	{
+		m_pBillboardMesh->Release();
+		delete m_pBillboardMesh;
+	}
+}
+
+void CBillboardShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState)
+{
+
 }

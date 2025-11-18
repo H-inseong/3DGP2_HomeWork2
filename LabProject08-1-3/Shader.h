@@ -172,4 +172,18 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateGeometryShader();
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
+	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext = NULL);
+	virtual void ReleaseObjects();
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState = 0);
+
+protected:
+	UINT 				m_nTextures = 0;
+	CMesh*				m_pBillboardMesh = NULL;
+	CTexture**			m_ppBillboardTextures = NULL;
+
+	ID3D12Resource*		m_pd3dcbBillboard = NULL;
+	UINT				m_nBillboards = 0;
+	XMFLOAT2*			m_pcbMappedBillboard = NULL;
+
+	CRawFormatImage*	m_pRawFormatImage = NULL;
 };

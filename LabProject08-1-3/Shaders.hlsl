@@ -242,35 +242,73 @@ float4 PSTerrain(VS_TERRAIN_OUTPUT input) : SV_TARGET
 
 cbuffer cbBillboardInfo : register(b3)
 {
-	matrix					gmtxBillboard : packoffset(c0);
+    float2 gBillboardSize[7] : packoffset(c0);
 };
+Texture2D gBillboardTextures[7] : register(t0);
+
 
 struct GS_INPUT
 {
     float4 position : POSITION;
+    uint typeID : TYPE;
 };
 
 struct PS_INPUT
 {
     float4 position : SV_POSITION;
     float2 uv : TEXCOORD;
+    uint typeID : TYPE;
 };
 
-GS_INPUT VS_Billboard(VS_SPRITE_TEXTURED_INPUT input)
+
+GS_INPUT VS_Billboard(float4 input : POSITION)
 {
 	GS_INPUT output;
-	output.position = mul(mul(float4(input.position, 1.0f), gmtxBillboard), gmtxView);
+    output.position = (input.xyz, 1.0f); // 받아온 행렬이 월드 행렬이므로 월드 좌표계 위치를 그대로 넘겨줌
+    output.typeID = input.w;
 	return output;
 }
 
 [maxvertexcount(4)]
 void GS_Billboard(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> outputStream)
 {
-    float3 cameraRight = float3(gmtxView._11, gmtxView._21, gmtxView._31);
-	float3 cameraUp = float3(gmtxView._12, gmtxView._22, gmtxView._32);
+    float3 camRight = float3(gmtxView._11, gmtxView._21, gmtxView._31);
+	float3 camUp	= float3(gmtxView._12, gmtxView._22, gmtxView._32);
 	
-	float3 billboardCenter = input[0].position.xyz;
-    float halfWidth = gBillboardSize.x * 0.5f;
-    float halfHeight = gBillboardSize.y * 0.5f;
+	float3 billboardCenter = input[0].position;
+    float halfWidth = gBillboardSize[input[0].typeID].x * 0.5f;
+    float halfHeight = gBillboardSize[input[0].typeID].y * 0.5f;
+	
+	matrix gmtxViewProjection = mul(gmtxView, gmtxProjection);
+	PS_INPUT vertex;
+    vertex.typeID = input[0].typeID;
+	
+	vertex.position = mul(float4(billboardCenter - camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
+	vertex.uv = float2(0.0f, 1.0f);
+	outputStream.Append(vertex);
 
+	vertex.position = mul(float4(billboardCenter - camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
+	vertex.uv = float2(0.0f, 0.0f);
+	outputStream.Append(vertex);
+
+	vertex.position = mul(float4(billboardCenter + camRight * halfWidth + camUp * halfHeight, 1.0f), gmtxViewProjection);
+	vertex.uv = float2(1.0f, 0.0f);
+	outputStream.Append(vertex);
+
+	vertex.position = mul(float4(billboardCenter + camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
+	vertex.uv = float2(1.0f, 1.0f);
+	outputStream.Append(vertex);
+    outputStream.RestartStrip();
+
+}
+
+Texture2D gtxtBillboard : register(t6);
+
+float4 PS_Billboard(PS_INPUT input) : SV_TARGET
+{
+    float4 cColor = gBillboardTextures[NonUniformResourceIndex(input.typeID)].Sample(gssWrap, input.uv);
+	
+	clip(cColor.a - 0.1f);
+	
+    return cColor;
 }
