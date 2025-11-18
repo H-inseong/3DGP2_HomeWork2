@@ -650,10 +650,21 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 		m_ppBillboardTextures[i]->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, pszBillboardTextures[i], RESOURCE_TEXTURE2D, 0);
 	}
 
+	XMFLOAT2 pBillboardSizes[] = {
+		XMFLOAT2(8.0f, 8.0f),		// Grass01
+		XMFLOAT2(8.0f, 8.0f),		// Grass02
+		XMFLOAT2(8.0f, 16.0f),		// Flower01
+		XMFLOAT2(8.0f, 16.0f),		// Flower02
+		XMFLOAT2(24.0f, 32.0f),		// Tree01
+		XMFLOAT2(24.0f, 32.0f),		// Tree02
+		XMFLOAT2(16.0f, 40.0f)		// Tree03
+	};
+
+
 	CHeightMapTerrain* pTerrain = (CHeightMapTerrain*)pContext;
 
 	std::vector<XMFLOAT4> vBillboardVertices;
-
+	int a[7]{};
 	if(pTerrain && m_pRawFormatImage)
 	{
 		XMFLOAT3 xmf3Scale = pTerrain->GetScale();
@@ -677,16 +688,13 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 				if (nType != -1)
 				{
 					float fHeight = pTerrain->GetHeight(x * xmf3Scale.x, z * xmf3Scale.z);
-					vBillboardVertices.push_back(XMFLOAT4(x * xmf3Scale.x, fHeight, z * xmf3Scale.z, (float)nType));
+					vBillboardVertices.push_back(XMFLOAT4(x * xmf3Scale.x, fHeight + pBillboardSizes[nType].y / 2, z * xmf3Scale.z, (float)nType));
 				}
 			}
 		}
 
 	}
-	if(!vBillboardVertices.empty())
-	{
-		//m_pBillboardMesh = new CBillboardPointListMesh(pd3dDevice, pd3dCommandList, vBillboardVertices);
-	}
+
 
 	if (!vBillboardVertices.empty())
 	{
@@ -704,15 +712,6 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 		m_d3dVertexBufferView.SizeInBytes = sizeof(XMFLOAT4) * m_nVertices;
 	}
 
-	XMFLOAT2 pBillboardSizes[] = {
-		XMFLOAT2(8.0f, 8.0f),		// Grass01
-		XMFLOAT2(6.0f, 6.0f),		// Grass02
-		XMFLOAT2(8.0f, 16.0f),		// Flower01
-		XMFLOAT2(8.0f, 16.0f),		// Flower02
-		XMFLOAT2(24.0f, 33.0f),		// Tree01
-		XMFLOAT2(24.0f, 33.0f),		// Tree02
-		XMFLOAT2(16.0f, 40.0f)		// Tree03
-	};
 
 	UINT ncbElementBytes = ((sizeof(XMFLOAT2) * m_nTextures + 255) & ~255);
 	m_pd3dcbBillboard = ::CreateBufferResource(pd3dDevice, pd3dCommandList, nullptr, ncbElementBytes,
@@ -752,7 +751,7 @@ void CBillboardShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamer
 	{
 		pd3dCommandList->SetGraphicsRootDescriptorTable(13, m_ppBillboardTextures[0]->GetGpuDescriptorHandle(0));
 	}
-
+	pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	pd3dCommandList->IASetVertexBuffers(0, 1, &m_d3dVertexBufferView);
 
 	if (m_nVertices > 0) pd3dCommandList->DrawInstanced(m_nVertices, 1, 0, 0);

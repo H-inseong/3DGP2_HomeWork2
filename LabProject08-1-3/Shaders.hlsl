@@ -264,7 +264,7 @@ struct PS_INPUT
 GS_INPUT VS_Billboard(float4 input : POSITION)
 {
 	GS_INPUT output;
-    output.position = (input.xyz, 1.0f); // 받아온 행렬이 월드 행렬이므로 월드 좌표계 위치를 그대로 넘겨줌
+    output.position = float4(input.xyz, 1.0f); // 받아온 행렬이 월드 행렬이므로 월드 좌표계 위치를 그대로 넘겨줌
     output.typeID = input.w;
 	return output;
 }
@@ -306,9 +306,9 @@ Texture2D gtxtBillboard : register(t6);
 
 float4 PS_Billboard(PS_INPUT input) : SV_TARGET
 {
-    float4 cColor = gBillboardTextures[NonUniformResourceIndex(input.typeID)].Sample(gssWrap, input.uv);
+    float4 cColor = gBillboardTextures[input.typeID].Sample(gssWrap, input.uv);
 	
-	clip(cColor.a - 0.1f);
+	//clip(cColor.a - 0.1f);
 	
     return cColor;
 }
