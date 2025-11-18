@@ -177,13 +177,16 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState = 0);
 
 protected:
-	UINT 				m_nTextures = 0;
-	CMesh*				m_pBillboardMesh = NULL;
-	CTexture**			m_ppBillboardTextures = NULL;
+	ID3D12Resource*						m_pd3dVertexBuffer = NULL;
+	ID3D12Resource*						m_pd3dVertexUploadBuffer = NULL;
+	D3D12_VERTEX_BUFFER_VIEW            m_d3dVertexBufferView;
+	int									m_nVertices = 0;
 
-	ID3D12Resource*		m_pd3dcbBillboard = NULL;
-	UINT				m_nBillboards = 0;
-	XMFLOAT2*			m_pcbMappedBillboard = NULL;
+	UINT 								m_nTextures = 0;
+	CTexture**							m_ppBillboardTextures = NULL;
 
-	CRawFormatImage*	m_pRawFormatImage = NULL;
+	ID3D12Resource*						m_pd3dcbBillboard = NULL;
+	XMFLOAT2*							m_pcbMappedBillboard = NULL;
+
+	CRawFormatImage*					m_pRawFormatImage = NULL;
 };

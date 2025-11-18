@@ -686,6 +686,22 @@ void CBillboardShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 	{
 		//m_pBillboardMesh = new CBillboardPointListMesh(pd3dDevice, pd3dCommandList, vBillboardVertices);
 	}
+
+	if (!vBillboardVertices.empty())
+	{
+		m_nVertices = vBillboardVertices.size();
+
+		m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList,
+			vBillboardVertices.data(),
+			sizeof(XMFLOAT4) * (UINT)vBillboardVertices.size(),
+			D3D12_HEAP_TYPE_DEFAULT,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+			&m_pd3dVertexUploadBuffer);
+
+		m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+		m_d3dVertexBufferView.StrideInBytes = sizeof(XMFLOAT4);
+		m_d3dVertexBufferView.SizeInBytes = sizeof(XMFLOAT4) * m_nVertices;
+	}
 }
 
 void CBillboardShader::ReleaseObjects()
@@ -699,14 +715,21 @@ void CBillboardShader::ReleaseObjects()
 		}
 	}
 	delete[] m_ppBillboardTextures;
-	if (m_pBillboardMesh)
-	{
-		m_pBillboardMesh->Release();
-		delete m_pBillboardMesh;
-	}
+
 }
 
 void CBillboardShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState)
 {
+	CShader::OnPrepareRender(pd3dCommandList, nPipelineState);
 
+	pd3dCommandList->SetGraphicsRootConstantBufferView(0, m_pd3dcbBillboard->GetGPUVirtualAddress());
+
+	if (m_ppBillboardTextures)
+	{
+		pd3dCommandList->SetGraphicsRootDescriptorTable(13, m_ppBillboardTextures[0]->GetGpuDescriptorHandle(0));
+	}
+
+	pd3dCommandList->IASetVertexBuffers(0, 1, &m_d3dVertexBufferView);
+
+	if (m_nVertices > 0) pd3dCommandList->DrawInstanced(m_nVertices, 1, 0, 0);
 }
