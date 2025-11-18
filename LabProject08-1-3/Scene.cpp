@@ -264,7 +264,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 {
 	ID3D12RootSignature *pd3dGraphicsRootSignature = NULL;
 
-	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[10];
+	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[11];
 
 	pd3dDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	pd3dDescriptorRanges[0].NumDescriptors = 1;
@@ -322,11 +322,18 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 
 	pd3dDescriptorRanges[9].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	pd3dDescriptorRanges[9].NumDescriptors = 7;
-	pd3dDescriptorRanges[9].BaseShaderRegister = 17; // 빌보드 텍스쳐 7개
+	pd3dDescriptorRanges[9].BaseShaderRegister = 17; // 빌보드 텍스쳐 7개 17 ~ 23
 	pd3dDescriptorRanges[9].RegisterSpace = 0;
 	pd3dDescriptorRanges[9].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	D3D12_ROOT_PARAMETER pd3dRootParameters[14];
+	pd3dDescriptorRanges[10].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[10].NumDescriptors = 1;
+	pd3dDescriptorRanges[10].BaseShaderRegister = 24; // 빌보드 텍스쳐 7개
+	pd3dDescriptorRanges[10].RegisterSpace = 0;
+	pd3dDescriptorRanges[10].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+
+	D3D12_ROOT_PARAMETER pd3dRootParameters[15];
 
 	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[0].Descriptor.ShaderRegister = 1; //Camera
@@ -398,6 +405,11 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	pd3dRootParameters[13].DescriptorTable.NumDescriptorRanges = 1;
 	pd3dRootParameters[13].DescriptorTable.pDescriptorRanges = &(pd3dDescriptorRanges[9]);
 	pd3dRootParameters[13].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dRootParameters[14].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	pd3dRootParameters[14].DescriptorTable.NumDescriptorRanges = 1;
+	pd3dRootParameters[14].DescriptorTable.pDescriptorRanges = &(pd3dDescriptorRanges[10]);
+	pd3dRootParameters[14].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
 
@@ -567,22 +579,23 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 
 	m_pBackground = new CGameObject(1, 1);
 
-	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f);
+	CTexturedRectMesh* pRectMesh = new CTexturedRectMesh(pd3dDevice, pd3dCommandList, 1280.0f, 720.0f, 0.0f, 0.0f, 0.0f);
 	m_pBackground->SetMesh(0, pRectMesh);
 
 	CTexture* pBgTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pBgTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/StartBackground.dds", RESOURCE_TEXTURE2D, 0);
+	CScene::CreateShaderResourceView(pd3dDevice, pBgTexture, 0, 3);
 
 	CStandardShader* pShader = new CStandardShader();
 	pShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	CMaterial* pMaterial = new CMaterial();
-	pMaterial->SetTexture(pBgTexture);
 	pMaterial->SetShader(pShader);
+	pMaterial->SetTexture(pBgTexture);
 	m_pBackground->SetMaterial(0, pMaterial);
 
 	m_vTextInfos.clear();
-	AddTextInfo("Start Game", XMFLOAT2(FRAME_BUFFER_WIDTH / 2.0f - 50, FRAME_BUFFER_HEIGHT / 2.0f - 20), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
-	AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_WIDTH / 2.0f - 20, FRAME_BUFFER_HEIGHT / 2.0f + 20), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+	AddTextInfo("Start", XMFLOAT2(FRAME_BUFFER_WIDTH / 2, FRAME_BUFFER_HEIGHT / 2.0f + 100), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+	AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_WIDTH / 2, FRAME_BUFFER_HEIGHT / 2.0f + 164), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
 }
 
 void CStartScene::ReleaseObjects()

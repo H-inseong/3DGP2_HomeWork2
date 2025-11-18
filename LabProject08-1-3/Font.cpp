@@ -186,24 +186,25 @@ bool CSpriteFont::LoadFontData(std::string_view filename)
 void CSpriteFont::DrawString(ID3D12GraphicsCommandList* pd3dCommandList, std::string_view text, XMFLOAT2 position, XMFLOAT4 color, float fScale)
 {
 	if (!m_pTexture) return;
-	UINT nOffset = 0;
+
+	UINT nChars = text.length();
+	if ((m_nFrameOffset + nChars) > m_MAX_CHARS) return;
 
 	for (char c : text)
 	{
 		if (c < 0 || c >= static_cast<unsigned char>(m_vCharInfos.size())) continue;
 		Fnt_Data& charInfo = m_vCharInfos[static_cast<size_t>(c)];
-		FONT_VERTEX* pCurrentVertex = m_pMappedFontVertices + nOffset;
+		FONT_VERTEX* pCurrentVertex = m_pMappedFontVertices + m_nFrameOffset;
 
 		pCurrentVertex->m_xmf2Position = position;
 		pCurrentVertex->m_xmf4Color = color;
 		pCurrentVertex->m_nType = static_cast<UINT>(c);
 		
 		position.x += charInfo.xadvance * fScale;
-		nOffset++;
+		m_nFrameOffset++;
 	}
 
 	pd3dCommandList->IASetVertexBuffers(0, 1, &m_d3dFontVertexBufferView);
 	pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
-	pd3dCommandList->DrawInstanced(nOffset, 1, 0, 0);
-
+	pd3dCommandList->DrawInstanced(nChars, 1, m_nFrameOffset - nChars, 0);
 }

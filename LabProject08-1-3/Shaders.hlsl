@@ -306,9 +306,7 @@ void GS_Billboard(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> output
 	outputStream.Append(vertex);
     outputStream.RestartStrip();
 
-}
-
-Texture2D gtxtBillboard : register(t6);
+};
 
 float4 PS_Billboard(PS_INPUT input) : SV_TARGET
 {
@@ -320,29 +318,29 @@ float4 PS_Billboard(PS_INPUT input) : SV_TARGET
 }
 
 ////////////////////////////////////////////////////////////
-Texture2D g_UITexture : register(t1);
+Texture2D g_InterfaceTexture : register(t24);
 
-struct VS_UI_INPUT
+struct VS_INTERFACE_INPUT
 {
 	float3 position : POSITION;
     float2 uv : TEXCOORD;
 };
 
-struct VS_UI_OUTPUT
+struct VS_INTERFACE_OUTPUT
 {
 	float4 position : SV_POSITION;
 	float2 uv : TEXCOORD;
 };
 
-VS_UI_OUTPUT VSUI(VS_UI_INPUT input)
+VS_INTERFACE_OUTPUT VS_Interface(VS_INTERFACE_INPUT input)
 {
-	VS_UI_OUTPUT output;
+	VS_INTERFACE_OUTPUT output;
 	output.position = float4(input.position.xy, 0.0f, 1.0f);
 	output.uv = input.uv;
 	return(output);
 }
 
-float4 PSUI(VS_UI_OUTPUT input) : SV_TARGET
+float4 PS_Interface(VS_INTERFACE_OUTPUT input) : SV_TARGET
 {
-    return g_UITexture.Sample(gssWrap, input.uv);
+    return g_InterfaceTexture.Sample(gssWrap, input.uv);
 }

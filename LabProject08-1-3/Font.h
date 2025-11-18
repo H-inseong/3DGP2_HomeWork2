@@ -47,7 +47,7 @@ public:
 	~CSpriteFont();
 
 	bool LoadFontData(std::string_view filename);
-
+	void Reset() { m_nFrameOffset = 0; }
 	void DrawString(
 		ID3D12GraphicsCommandList* pd3dCommandList,
 		std::string_view text,
@@ -67,6 +67,7 @@ private:
 	int						m_nScaleH = 0;
 
 	UINT					m_MAX_CHARS = 128;
+	UINT                    m_nFrameOffset = 0;
 
 	ID3D12Device*			m_pd3dDevice = nullptr;
 	ID3D12GraphicsCommandList* m_pd3dCommandList = nullptr;

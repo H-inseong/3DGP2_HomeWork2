@@ -429,6 +429,8 @@ void CGameFramework::RenderUI()
 	m_pcbMappedFont->ScreenSize = XMFLOAT2((float)m_nWndClientWidth, (float)m_nWndClientHeight);
 	m_pcbMappedFont->TextureSize = XMFLOAT2(512.0f, 512.0f);
 
+	if (m_pSpriteFont) m_pSpriteFont->Reset();
+
 	for (const TextInfo text : m_pScene->m_vTextInfos) {
 		m_pcbMappedFont->Scale = text.fScale;
 
@@ -761,7 +763,7 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 #endif
 	if (m_pPlayer && (m_eGameState == EGameState::InGame)) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
-
+	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 	RenderUI();
 
 	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
