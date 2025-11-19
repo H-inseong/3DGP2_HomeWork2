@@ -560,7 +560,7 @@ void CPlayerShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* 
 {
 	CShader::OnPrepareRender(pd3dCommandList, nPipelineState);
 
-	float fBlendFactor[] = { 0.5f, 0.5f, 0.5f, 0.5f };
+	float fBlendFactor[] = { 0.3f, 0.3f, 0.3f, 0.3f };
 	pd3dCommandList->OMSetBlendFactor(fBlendFactor);
 
 	CShader::Render(pd3dCommandList, pCamera, nPipelineState);
