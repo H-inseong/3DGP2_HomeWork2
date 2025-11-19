@@ -275,7 +275,7 @@ GS_INPUT VS_Billboard(VS_INPUT input)
 {
 	GS_INPUT output;
     output.position = float4(input.position, 1.0f); // 받아온 행렬이 월드 행렬이므로 월드 좌표계 위치를 그대로 넘겨줌
-    output.typeID = input.typeID;
+    output.typeID = input.typeID ;
 	return output;
 }
 
@@ -306,7 +306,7 @@ void GS_Billboard(point GS_INPUT input[1], inout TriangleStream<PS_INPUT> output
         float halfHeight = gBillboardSize[input[0].typeID].y * 0.5f;
 		
         PS_INPUT vertex;
-        vertex.typeID = input[0].typeID;
+        vertex.typeID = input[0].typeID + 3;
 	
         vertex.position = mul(float4(billboardCenter - camRight * halfWidth - camUp * halfHeight, 1.0f), gmtxViewProjection);
         vertex.uv = float2(0.0f, 1.0f);

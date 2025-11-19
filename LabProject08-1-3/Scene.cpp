@@ -730,7 +730,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	m_pBackground->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 
 	m_vTextInfos.clear();
-	AddTextInfo("Start", XMFLOAT2(FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT / 2.0f ), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+	AddTextInfo("Start", XMFLOAT2(FRAME_BUFFER_WIDTH / 3 * 2 - 15, FRAME_BUFFER_HEIGHT / 2.0f ), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
 	AddTextInfo("Quit", XMFLOAT2(FRAME_BUFFER_WIDTH / 3 * 2, FRAME_BUFFER_HEIGHT / 2.0f +64), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
 
 	for (int i = 0; i < m_vTextInfos.size(); ++i)
@@ -749,6 +749,7 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 
 		m_vButtons.emplace_back(rcButton);
 	}
+	AddTextInfo("3DGP 2 - 2", XMFLOAT2(100 , 100), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
 }
 
 void CStartScene::ReleaseObjects()
