@@ -550,9 +550,9 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		{
 			if (!m_bPaused) {
 				m_vTextInfos.clear();
-				AddTextInfo("Pause", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 1), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f);
-				AddTextInfo("Resume", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 2), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
-				AddTextInfo("Quit", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 3), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+				AddTextInfo("Pause", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 1), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), 1.5f);
+				AddTextInfo("Resume", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 2), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.5f);
+				AddTextInfo("Quit", XMFLOAT2(300, FRAME_BUFFER_HEIGHT / 4 * 3), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 1.5f);
 				for (int i = 1; i < m_vTextInfos.size(); ++i)
 				{
 					XMFLOAT2 size = { 0.0f, 0.0f };
